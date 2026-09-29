@@ -40,7 +40,10 @@ async function signup(body: any) {
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
-    options: { data: { name, display_name: name } },
+    options: {
+      data: { name, display_name: name },
+      emailRedirectTo: window.location.origin + '/',
+    },
   });
   if (error) return { ok: false, error: error.message };
   if (!data.session || !data.user) {
