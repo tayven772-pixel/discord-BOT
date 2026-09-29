@@ -3,63 +3,191 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <meta name="theme-color" content="#0f1117" />
-  <title>Meta Support</title>
+  <meta name="theme-color" content="#070b12" />
+  <title>Meta — Learn to Code</title>
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
-  <main class="shell">
-    <header class="topbar">
-      <div>
-        <p class="eyebrow">META</p>
-        <h1>Meta Support</h1>
-        <p class="sub">Discord automation, onboarding, tickets, staff applications, and voice intro.</p>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brandMark">M</div>
+        <div><strong>Meta</strong><span>Learn by building</span></div>
       </div>
-      <div class="status" id="status"><span></span> Checking bot…</div>
-    </header>
 
-    <section class="grid">
-      <article class="card hero">
+      <nav>
+        <button class="nav active" data-view="learn">⌘ <span>Learn</span></button>
+        <button class="nav" data-view="projects">▣ <span>Projects</span></button>
+        <button class="nav" data-view="coach">✦ <span>AI Coach</span></button>
+        <button class="nav" data-view="progress">◔ <span>Progress</span></button>
+        <button class="nav" data-view="settings">⚙ <span>Settings</span></button>
+      </nav>
+
+      <div class="sidebarBottom">
+        <div class="streakCard"><span>🔥</span><div><b id="sideStreak">1 day</b><small>Current streak</small></div></div>
+        <button class="profileButton" data-view="settings">
+          <div class="avatar" id="avatarPreview">T</div>
+          <div><b id="profileName">Coder</b><small id="profileLevel">Beginner</small></div>
+        </button>
+      </div>
+    </aside>
+
+    <main>
+      <header class="topbar">
         <div>
-          <p class="label">Discord Bot</p>
-          <h2>Meta Support</h2>
-          <p>The bot handles the persistent TTS introduction, role onboarding, private tickets, staff applications, and server tools.</p>
+          <p class="eyebrow">META LEARNING</p>
+          <h1 id="pageTitle">Learn</h1>
         </div>
-        <a class="button" href="https://discord.com" target="_blank" rel="noreferrer">Open Discord</a>
-      </article>
-
-      <article class="card">
-        <p class="label">Voice Intro</p>
-        <h3>Always-ready onboarding</h3>
-        <p>Members who join the configured introduction VC can hear the Meta intro, receive the completion role, lose the temporary role, and be disconnected when finished.</p>
-      </article>
-
-      <article class="card">
-        <p class="label">Support</p>
-        <h3>Private tickets</h3>
-        <p>General support, member reports, and partnership requests create private ticket channels with staff controls and transcripts.</p>
-      </article>
-
-      <article class="card">
-        <p class="label">Staff</p>
-        <h3>DM applications</h3>
-        <p>Applicants start from the server panel, complete the application privately in DMs, and staff review it with Accept and Deny controls.</p>
-      </article>
-
-      <article class="card wide">
-        <p class="label">Commands</p>
-        <div class="commands">
-          <code>/intro</code>
-          <code>/introconfig</code>
-          <code>/ticketpanel</code>
-          <code>/ticketconfig</code>
-          <code>/staffpanel</code>
-          <code>/staffconfig</code>
-          <code>/serverstats</code>
+        <div class="topActions">
+          <div class="xpPill"><span>⚡</span><b id="xpValue">0 XP</b></div>
+          <button class="ghostBtn" id="dailyBtn">Daily challenge</button>
         </div>
-      </article>
-    </section>
-  </main>
+      </header>
+
+      <section id="view-learn" class="view active">
+        <div class="hero">
+          <div>
+            <span class="badge">Your learning path</span>
+            <h2>Learn code by actually <em>writing it.</em></h2>
+            <p>Pick a path, solve guided challenges, use hints when you need them, and get feedback on what to improve.</p>
+          </div>
+          <div class="heroProgress">
+            <div class="ring"><span id="overallPercent">0%</span></div>
+            <div><b>Overall progress</b><small id="overallText">Start your first lesson</small></div>
+          </div>
+        </div>
+
+        <div class="levelTabs" id="levelTabs">
+          <button class="level active" data-level="beginner">Beginner</button>
+          <button class="level" data-level="intermediate">Intermediate</button>
+          <button class="level" data-level="pro">Pro</button>
+        </div>
+
+        <div class="learnGrid">
+          <section class="courseList">
+            <div class="sectionHead"><div><p class="eyebrow">COURSES</p><h3>Choose what to learn</h3></div></div>
+            <div id="courseCards" class="courseCards"></div>
+          </section>
+
+          <section class="lessonPanel">
+            <div id="lessonEmpty" class="emptyState">
+              <div class="emptyIcon">⌨</div>
+              <h3>Choose a course</h3>
+              <p>Your next guided coding challenge will appear here.</p>
+            </div>
+
+            <div id="lessonActive" class="lessonActive hidden">
+              <div class="lessonHeader">
+                <div><p class="eyebrow" id="lessonCourse">HTML</p><h3 id="lessonTitle">Build your first heading</h3></div>
+                <span class="difficulty" id="lessonDifficulty">Beginner</span>
+              </div>
+
+              <div class="taskBox">
+                <b>What to do</b>
+                <p id="lessonPrompt"></p>
+                <div class="requirements" id="requirements"></div>
+              </div>
+
+              <div class="editorShell">
+                <div class="editorTop"><span id="fileName">index.html</span><button id="resetCode">Reset</button></div>
+                <textarea id="codeEditor" spellcheck="false"></textarea>
+              </div>
+
+              <div class="lessonActions">
+                <button class="secondaryBtn" id="hintBtn">💡 Hint <span id="hintCost">−5 grade</span></button>
+                <button class="primaryBtn" id="gradeBtn">Check my code</button>
+              </div>
+
+              <div id="hintBox" class="feedback hidden"></div>
+              <div id="gradeBox" class="feedback hidden"></div>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section id="view-projects" class="view">
+        <div class="pageIntro">
+          <div><span class="badge">Play mode</span><h2>Build something of your own.</h2><p>Use starter projects or open the sandbox and experiment without a lesson telling you exactly what to type.</p></div>
+          <button class="primaryBtn" id="newProjectBtn">+ New project</button>
+        </div>
+        <div id="projectGrid" class="projectGrid"></div>
+      </section>
+
+      <section id="view-coach" class="view">
+        <div class="coachLayout">
+          <section class="coachWelcome">
+            <span class="badge">AI Coach</span>
+            <h2>Ask for guidance, not just answers.</h2>
+            <p>Meta Coach is designed to explain concepts, point out mistakes, and help you think through the next step.</p>
+            <div class="coachExamples">
+              <button>Why isn't my flexbox centering?</button>
+              <button>Explain functions like I'm new</button>
+              <button>Give me a hint for my current lesson</button>
+            </div>
+          </section>
+          <section class="chatCard">
+            <div class="chatMessages" id="chatMessages">
+              <div class="message ai"><b>Meta Coach</b><p>What are you working on? I’ll help you reason through it without immediately giving away the answer.</p></div>
+            </div>
+            <form id="coachForm" class="coachInput">
+              <input id="coachInput" placeholder="Ask about code..." autocomplete="off" />
+              <button>Send</button>
+            </form>
+          </section>
+        </div>
+      </section>
+
+      <section id="view-progress" class="view">
+        <div class="statsGrid">
+          <article><span>🔥</span><b id="statStreak">1</b><small>Day streak</small></article>
+          <article><span>⚡</span><b id="statXp">0</b><small>Total XP</small></article>
+          <article><span>✓</span><b id="statLessons">0</b><small>Lessons completed</small></article>
+          <article><span>A</span><b id="statGrade">—</b><small>Average grade</small></article>
+        </div>
+        <section class="progressPanel">
+          <div class="sectionHead"><div><p class="eyebrow">SKILLS</p><h3>Your learning progress</h3></div></div>
+          <div id="skillProgress"></div>
+        </section>
+      </section>
+
+      <section id="view-settings" class="view">
+        <div class="settingsGrid">
+          <section class="settingsCard">
+            <p class="eyebrow">PROFILE</p>
+            <h3>Your profile</h3>
+            <label>Display name<input id="nameInput" maxlength="24" placeholder="Coder" /></label>
+            <label>Profile picture URL<input id="avatarInput" placeholder="https://..." /></label>
+            <label>Learning level
+              <select id="levelSelect">
+                <option value="beginner">Beginner</option>
+                <option value="intermediate">Intermediate</option>
+                <option value="pro">Pro</option>
+              </select>
+            </label>
+            <button class="primaryBtn" id="saveSettings">Save profile</button>
+          </section>
+
+          <section class="settingsCard">
+            <p class="eyebrow">PREFERENCES</p>
+            <h3>Learning preferences</h3>
+            <label>Language
+              <select id="languageSelect">
+                <option>English</option>
+                <option>French</option>
+                <option>Spanish</option>
+                <option>German</option>
+                <option>Japanese</option>
+              </select>
+            </label>
+            <label class="toggleRow"><div><b>Reduced hints</b><small>Make hints less revealing</small></div><input type="checkbox" id="reducedHints" /></label>
+            <label class="toggleRow"><div><b>Daily reminders</b><small>Keep your learning streak going</small></div><input type="checkbox" id="dailyReminders" checked /></label>
+          </section>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="toast" class="toast"></div>
   <script src="/script.js"></script>
 </body>
 </html>
