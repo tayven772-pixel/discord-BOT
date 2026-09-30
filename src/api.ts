@@ -46,13 +46,29 @@ async function signup(body: any) {
     },
   });
   if (error) return { ok: false, error: error.message };
-  if (!data.session || !data.user) {
-    return { ok: false, error: 'Check your email to confirm your Meta account, then log in.' };
+
+  let session = data.session;
+  let signedInUser = data.user;
+
+  // Email confirmation is disabled for Meta, so signup should enter the site immediately.
+  // If Supabase does not return a session for any reason, sign in with the same credentials.
+  if (!session) {
+    const retry = await supabase.auth.signInWithPassword({ email, password });
+    if (retry.error || !retry.data.session || !retry.data.user) {
+      return { ok: false, error: retry.error?.message || 'Your account was created, but automatic sign-in failed. Try logging in.' };
+    }
+    session = retry.data.session;
+    signedInUser = retry.data.user;
   }
+
+  if (!signedInUser) {
+    return { ok: false, error: 'Your Meta account could not be opened.' };
+  }
+
   return {
     ok: true,
-    token: data.session.access_token,
-    user: { email: data.user.email || email, name },
+    token: session.access_token,
+    user: { email: signedInUser.email || email, name },
   };
 }
 
