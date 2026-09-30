@@ -229,7 +229,8 @@ async function privacyInquiry(body: any) {
 
 async function fallback(method: 'GET' | 'POST', url: string, body?: unknown) {
   const path = url.replace(/^\/api\//, '');
-  const response = await fetch('/api/proxy?path=' + encodeURIComponent(path), {
+  const target = path === 'coach' ? '/api/coach' : '/api/proxy?path=' + encodeURIComponent(path);
+  const response = await fetch(target, {
     method,
     headers: body === undefined ? undefined : { 'content-type': 'application/json' },
     body: body === undefined ? undefined : JSON.stringify(body),
