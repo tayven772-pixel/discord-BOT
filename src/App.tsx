@@ -14,6 +14,9 @@ import {
   Compass,
   Lightbulb,
   Moon,
+  FolderKanban,
+  Settings,
+  CreditCard,
   Pause,
   Play,
   Search,
@@ -108,6 +111,37 @@ const playTracks: PlayTrack[] = [
     projects: ['Custom item', 'Custom block', 'Simple combat mechanic'],
   },
 ];
+
+const aiPlans = [
+  {
+    id: 'free',
+    name: 'Free',
+    price: '$0',
+    cadence: 'forever',
+    aiCredits: 40,
+    projects: 3,
+    description: 'Learn, try the agent, and keep a few active projects.',
+  },
+  {
+    id: 'builder',
+    name: 'Builder',
+    price: '$4.99',
+    cadence: 'per month',
+    aiCredits: 500,
+    projects: 25,
+    description: 'For learners building websites, games, apps, and Minecraft projects regularly.',
+  },
+  {
+    id: 'pro',
+    name: 'Pro',
+    price: '$9.99',
+    cadence: 'per month',
+    aiCredits: 2000,
+    projects: -1,
+    description: 'For heavier project work with a much larger AI allowance.',
+  },
+] as const;
+
 
 if (!clerkPubKey) {
   throw new Error('Missing VITE_CLERK_PUBLISHABLE_KEY in the environment');
@@ -281,6 +315,14 @@ function Header({ progressCount }: { progressCount: number }) {
           <span className="progress-dot" />
           {progressCount} / {lessons.length} lessons
         </span>
+        <div className="header-icon-actions" aria-label="Workspace shortcuts">
+          <Link href="/projects" className="header-icon-button" title="Projects" aria-label="Projects" data-testid="button-projects">
+            <FolderKanban aria-hidden="true" />
+          </Link>
+          <Link href="/settings" className="header-icon-button" title="Settings" aria-label="Settings" data-testid="button-settings">
+            <Settings aria-hidden="true" />
+          </Link>
+        </div>
         {isLoaded && user ? (
           <div className="account-actions" data-testid="section-account">
             <span className="account-name" title={user.primaryEmailAddress?.emailAddress ?? undefined}>
@@ -560,6 +602,117 @@ function PlayPage() {
             </aside>
           </section>
         )}
+      </main>
+    </AppShell>
+  );
+}
+
+function ProjectsPage() {
+  const projectTypes = [
+    ['Website', 'HTML, CSS, JavaScript'],
+    ['Game', 'Browser game project'],
+    ['App', 'App-style project'],
+    ['Roblox', 'Luau / Roblox Studio'],
+    ['MCBE', 'Bedrock add-on'],
+    ['MCJE', 'Java Edition datapack'],
+    ['MCJE Mod', 'Java mod project'],
+  ];
+
+  return (
+    <AppShell>
+      <main className="workspace-page">
+        <section className="workspace-head">
+          <div>
+            <p className="section-kicker">Projects</p>
+            <h1>Your build space</h1>
+            <p>Create a project first, then the Meta AI agent can use that project's files and goals as its working context.</p>
+          </div>
+          <Link href="/pricing" className="workspace-plan-link"><CreditCard aria-hidden="true" /> AI plans</Link>
+        </section>
+
+        <section className="new-project-grid">
+          {projectTypes.map(([name, detail]) => (
+            <button className="new-project-card" type="button" key={name}>
+              <span className="new-project-icon"><Code2 aria-hidden="true" /></span>
+              <strong>{name}</strong>
+              <small>{detail}</small>
+            </button>
+          ))}
+        </section>
+
+        <section className="workspace-empty">
+          <FolderKanban aria-hidden="true" />
+          <h2>No saved projects here yet</h2>
+          <p>When project persistence is connected, your projects will appear here and each one will keep its own AI conversation/context.</p>
+        </section>
+      </main>
+    </AppShell>
+  );
+}
+
+function SettingsPage() {
+  const { theme, toggleTheme } = useTheme();
+  return (
+    <AppShell>
+      <main className="workspace-page">
+        <section className="workspace-head">
+          <div>
+            <p className="section-kicker">Settings</p>
+            <h1>Make Meta yours</h1>
+            <p>Control appearance, learning preferences, account options, and AI plan access.</p>
+          </div>
+        </section>
+
+        <section className="settings-list">
+          <div className="settings-row">
+            <div><strong>Appearance</strong><span>Switch between light and dark mode.</span></div>
+            <button type="button" className="button-secondary" onClick={toggleTheme}>{theme === 'dark' ? 'Use light' : 'Use dark'}</button>
+          </div>
+          <div className="settings-row">
+            <div><strong>AI plan</strong><span>View AI credits, project limits, and upgrade options.</span></div>
+            <Link href="/pricing" className="button-secondary">View plans</Link>
+          </div>
+          <div className="settings-row">
+            <div><strong>Account & privacy</strong><span>Manage your account or delete it.</span></div>
+            <Link href="/account" className="button-secondary">Manage</Link>
+          </div>
+        </section>
+      </main>
+    </AppShell>
+  );
+}
+
+function PricingPage() {
+  return (
+    <AppShell>
+      <main className="workspace-page">
+        <section className="workspace-head pricing-head">
+          <div>
+            <p className="section-kicker">Meta AI plans</p>
+            <h1>Pay for AI usage, not basic learning.</h1>
+            <p>Lessons stay available. Paid plans increase AI project credits and the number of projects you can keep active.</p>
+          </div>
+        </section>
+        <section className="pricing-grid">
+          {aiPlans.map((plan) => (
+            <article className={`pricing-card${plan.id === 'builder' ? ' featured' : ''}`} key={plan.id}>
+              {plan.id === 'builder' && <span className="pricing-badge">Recommended</span>}
+              <h2>{plan.name}</h2>
+              <div className="pricing-price"><strong>{plan.price}</strong><span>{plan.cadence}</span></div>
+              <p>{plan.description}</p>
+              <ul>
+                <li><Check aria-hidden="true" /> {plan.aiCredits.toLocaleString()} AI credits / month</li>
+                <li><Check aria-hidden="true" /> {plan.projects < 0 ? 'Unlimited projects' : `${plan.projects} active projects`}</li>
+                <li><Check aria-hidden="true" /> Project-aware AI context</li>
+                <li><Check aria-hidden="true" /> Lessons and Lesson Play included</li>
+              </ul>
+              <button type="button" className={plan.id === 'free' ? 'button-secondary' : 'button-primary'}>
+                {plan.id === 'free' ? 'Current/free plan' : 'Choose plan'}
+              </button>
+            </article>
+          ))}
+        </section>
+        <p className="pricing-note">AI credits are account-wide, but conversations stay attached to the project you are working in. Paid checkout will be connected to the billing provider before launch.</p>
       </main>
     </AppShell>
   );
@@ -1199,6 +1352,9 @@ function ProtectedRoutes() {
       <Route path="/play" component={PlayPage} />
       <Route path="/play/:track" component={PlayPage} />
       <Route path="/account" component={AccountSettingsPage} />
+      <Route path="/projects" component={ProjectsPage} />
+      <Route path="/settings" component={SettingsPage} />
+      <Route path="/pricing" component={PricingPage} />
       <Route component={NotFound} />
     </Switch>
   );
