@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState, type CSSProperties, type FormEvent, type ReactNode } from 'react';
+import JSZip from 'jszip';
 import { ClerkProvider, SignIn, SignUp, useAuth, useClerk, useUser } from '@clerk/react';
 import { shadcn } from '@clerk/themes';
 import { Link, Redirect, Route, Router as WouterRouter, Switch, useLocation, useParams } from 'wouter';
@@ -17,6 +18,10 @@ import {
   FolderKanban,
   Settings,
   CreditCard,
+  Download,
+  Eye,
+  FileCode2,
+  MessageSquare,
   Pause,
   Plus,
   Send,
@@ -361,8 +366,6 @@ function Header({ progressCount }: { progressCount: number }) {
       </Link>
       <nav className="top-links" aria-label="Main navigation">
         <Link href="/" data-testid="link-explore">Explore</Link>
-        <Link href="/play" data-testid="link-lesson-play">Lesson Play</Link>
-        <a href="/#learning-path" data-testid="link-learning-path">Learning path</a>
         <span className="top-progress" data-testid="status-lessons-completed">
           <span className="progress-dot" />
           {progressCount} / {lessons.length} lessons
@@ -393,22 +396,28 @@ function Header({ progressCount }: { progressCount: number }) {
   );
 }
 
-function AppShell({ children }: { children: ReactNode }) {
+function AppShell({ children, showBottomNav = true }: { children: ReactNode; showBottomNav?: boolean }) {
   const { progress } = useProgress();
   return (
     <div className="app-shell">
       <Header progressCount={progress.completedLessonIds.length} />
       {children}
-      <nav className="bottom-workspace-nav" aria-label="Workspace navigation">
-        <Link href="/projects" className="bottom-workspace-button" aria-label="Projects" data-testid="button-projects">
-          <FolderKanban aria-hidden="true" />
-          <span>Projects</span>
-        </Link>
-        <Link href="/settings" className="bottom-workspace-button" aria-label="Settings" data-testid="button-settings">
-          <Settings aria-hidden="true" />
-          <span>Settings</span>
-        </Link>
-      </nav>
+      {showBottomNav && (
+        <nav className="bottom-workspace-nav" aria-label="Main navigation">
+          <Link href="/projects" className="bottom-workspace-button" aria-label="Projects" data-testid="button-projects">
+            <FolderKanban aria-hidden="true" />
+            <span>Projects</span>
+          </Link>
+          <Link href="/play" className="bottom-workspace-button" aria-label="Lessons" data-testid="button-lessons">
+            <BookOpen aria-hidden="true" />
+            <span>Lessons</span>
+          </Link>
+          <Link href="/settings" className="bottom-workspace-button" aria-label="Settings" data-testid="button-settings">
+            <Settings aria-hidden="true" />
+            <span>Settings</span>
+          </Link>
+        </nav>
+      )}
     </div>
   );
 }
@@ -856,11 +865,23 @@ function ProjectPage() {
   const [, setLocation] = useLocation();
   const [projects, setProjects] = useState<MetaProject[]>(() => readProjects());
   const project = projects.find((item) => item.id === params.projectId);
+  const [activeTab, setActiveTab] = useState<'files' | 'preview' | 'chat'>('files');
+  const [activeFile, setActiveFile] = useState('');
+  const [newFileName, setNewFileName] = useState('');
+  const [showNewFile, setShowNewFile] = useState(false);
   const [message, setMessage] = useState('');
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => writeProjects(projects), [projects]);
+
+  const currentFiles = project?.files || {};
+  const fileEntries = Object.entries(currentFiles);
+
+  useEffect(() => {
+    if (!activeFile && fileEntries.length) setActiveFile(fileEntries[0][0]);
+    if (activeFile && !currentFiles[activeFile] && fileEntries.length) setActiveFile(fileEntries[0][0]);
+  }, [activeFile, fileEntries.length, project?.id]);
 
   if (!project) {
     return (
@@ -876,6 +897,60 @@ function ProjectPage() {
     );
   }
 
+  const updateFiles = (files: Record<string, string>) => {
+    setProjects((current) => current.map((item) =>
+      item.id === project.id ? { ...item, files, updatedAt: Date.now() } : item
+    ));
+  };
+
+  const updateActiveFile = (content: string) => {
+    if (!activeFile) return;
+    updateFiles({ ...currentFiles, [activeFile]: content });
+  };
+
+  const createFile = () => {
+    const path = newFileName.trim().replace(/^\/+/, '');
+    if (!path || currentFiles[path]) return;
+    updateFiles({ ...currentFiles, [path]: '' });
+    setActiveFile(path);
+    setNewFileName('');
+    setShowNewFile(false);
+  };
+
+  const deleteActiveFile = () => {
+    if (!activeFile) return;
+    const next = { ...currentFiles };
+    delete next[activeFile];
+    updateFiles(next);
+    setActiveFile(Object.keys(next)[0] || '');
+  };
+
+  const downloadFile = (path: string, content: string) => {
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = path.split('/').pop() || 'file.txt';
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    URL.revokeObjectURL(url);
+  };
+
+  const downloadProject = async () => {
+    const zip = new JSZip();
+    Object.entries(currentFiles).forEach(([path, content]) => zip.file(path, content));
+    const blob = await zip.generateAsync({ type: 'blob' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = `${project.name.replace(/[^a-z0-9-_]+/gi, '-') || 'meta-project'}.zip`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    URL.revokeObjectURL(url);
+  };
+
   const sendToAi = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const prompt = message.trim();
@@ -883,27 +958,18 @@ function ProjectPage() {
     setSending(true);
     setError('');
 
-    const withUserMessage = projects.map((item) =>
+    setProjects((current) => current.map((item) =>
       item.id === project.id
-        ? {
-            ...item,
-            messages: [...(item.messages || []), { role: 'user' as const, content: prompt }],
-            updatedAt: Date.now(),
-          }
+        ? { ...item, messages: [...(item.messages || []), { role: 'user' as const, content: prompt }], updatedAt: Date.now() }
         : item
-    );
-    setProjects(withUserMessage);
+    ));
     setMessage('');
 
     try {
       const response = await fetch('/api/coach', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          message: prompt,
-          track: 'Project Builder',
-          project,
-        }),
+        body: JSON.stringify({ message: prompt, track: 'Project Builder', project }),
       });
       const payload = await response.json();
       if (!response.ok) throw new Error(payload?.error || 'Meta AI could not respond.');
@@ -927,64 +993,140 @@ function ProjectPage() {
     }
   };
 
-  const fileEntries = Object.entries(project.files || {});
+  const htmlFile = currentFiles['index.html'] || currentFiles['src/index.html'] || '';
+  const cssFile = currentFiles['style.css'] || currentFiles['styles.css'] || currentFiles['src/index.css'] || '';
+  const jsFile = currentFiles['script.js'] || currentFiles['src/main.js'] || currentFiles['src/main.ts'] || '';
+  const previewDocument = htmlFile
+    ? htmlFile
+        .replace('</head>', `<style>${cssFile}</style></head>`)
+        .replace('</body>', `<script>${jsFile.replace(/<\/script>/gi, '<\\/script>')}</script></body>`)
+    : '';
 
   return (
-    <AppShell>
-      <main className="project-detail-page">
-        <div className="project-detail-head">
-          <button type="button" className="back-link project-back-button" onClick={() => setLocation('/projects')}>
-            <ArrowLeft aria-hidden="true" /> Back to projects
+    <AppShell showBottomNav={false}>
+      <main className="project-editor-page">
+        <header className="project-editor-head">
+          <button type="button" className="project-back-button icon-only-button" onClick={() => setLocation('/projects')} aria-label="Back to projects">
+            <ArrowLeft aria-hidden="true" />
           </button>
-          <div>
-            <p className="section-kicker">{project.type}</p>
-            <h1>{project.name}</h1>
+          <div className="project-editor-title">
+            <strong>{project.name}</strong>
+            <span>{project.type}</span>
           </div>
-        </div>
+          <button type="button" className="project-download-button" onClick={() => void downloadProject()} disabled={!fileEntries.length}>
+            <Download aria-hidden="true" /> Download
+          </button>
+        </header>
 
-        <section className="project-conversation" aria-live="polite">
-          {(project.messages || []).length ? (
-            (project.messages || []).map((entry, index) => (
-              <div className={`project-message ${entry.role}`} key={`${entry.role}-${index}`}>
-                <span>{entry.role === 'user' ? 'You' : 'Meta'}</span>
-                <p>{entry.content}</p>
-              </div>
-            ))
-          ) : (
-            <div className="project-chat-empty">
-              <Sparkles aria-hidden="true" />
-              <h2>Project ready.</h2>
-              <p>Tell Meta what you want to build or change. It can update the project's starter files as you work.</p>
+        <section className="project-editor-body">
+          {activeTab === 'files' && (
+            <div className="code-workspace">
+              <aside className="file-sidebar">
+                <div className="file-sidebar-head">
+                  <span>Files</span>
+                  <button type="button" className="icon-only-button" onClick={() => setShowNewFile(true)} aria-label="New file">
+                    <Plus aria-hidden="true" />
+                  </button>
+                </div>
+                {showNewFile && (
+                  <div className="new-file-inline">
+                    <input value={newFileName} onChange={(event) => setNewFileName(event.target.value)} placeholder="src/file.js" onKeyDown={(event) => { if (event.key === 'Enter') createFile(); }} autoFocus />
+                    <button type="button" onClick={createFile}>Add</button>
+                  </div>
+                )}
+                <div className="file-list">
+                  {fileEntries.map(([path]) => (
+                    <button type="button" key={path} className={`file-list-item${activeFile === path ? ' active' : ''}`} onClick={() => setActiveFile(path)}>
+                      <FileCode2 aria-hidden="true" />
+                      <span>{path}</span>
+                    </button>
+                  ))}
+                  {!fileEntries.length && <p className="file-list-empty">No files yet. Tap + to create one.</p>}
+                </div>
+              </aside>
+
+              <section className="code-editor-panel">
+                {activeFile ? (
+                  <>
+                    <div className="code-editor-toolbar">
+                      <span>{activeFile}</span>
+                      <div>
+                        <button type="button" className="editor-text-button" onClick={() => downloadFile(activeFile, currentFiles[activeFile] || '')}>Download file</button>
+                        <button type="button" className="editor-text-button danger-text" onClick={deleteActiveFile}>Delete</button>
+                      </div>
+                    </div>
+                    <textarea
+                      className="manual-code-editor"
+                      value={currentFiles[activeFile] || ''}
+                      onChange={(event) => updateActiveFile(event.target.value)}
+                      spellCheck={false}
+                      aria-label={`Edit ${activeFile}`}
+                    />
+                  </>
+                ) : (
+                  <div className="editor-empty">
+                    <FileCode2 aria-hidden="true" />
+                    <h2>Code it yourself.</h2>
+                    <p>Create a file with the + button, then type directly in the editor.</p>
+                  </div>
+                )}
+              </section>
             </div>
           )}
-          {sending && <div className="project-message assistant"><span>Meta</span><p>Working on your project…</p></div>}
-          {error && <p className="project-ai-error" role="alert">{error}</p>}
+
+          {activeTab === 'preview' && (
+            <section className="project-preview-panel">
+              {previewDocument ? (
+                <iframe title="Project preview" sandbox="allow-scripts" srcDoc={previewDocument} />
+              ) : (
+                <div className="editor-empty">
+                  <Eye aria-hidden="true" />
+                  <h2>Preview</h2>
+                  <p>Browser preview appears when this project has an index.html file. Other project types can still be edited and downloaded.</p>
+                </div>
+              )}
+            </section>
+          )}
+
+          {activeTab === 'chat' && (
+            <section className="project-chat-tab">
+              <div className="project-conversation" aria-live="polite">
+                {(project.messages || []).length ? (
+                  (project.messages || []).map((entry, index) => (
+                    <div className={`project-message ${entry.role}`} key={`${entry.role}-${index}`}>
+                      <span>{entry.role === 'user' ? 'You' : 'Meta'}</span>
+                      <p>{entry.content}</p>
+                    </div>
+                  ))
+                ) : (
+                  <div className="project-chat-empty">
+                    <Sparkles aria-hidden="true" />
+                    <h2>Chat with Meta.</h2>
+                    <p>Ask for help when you want it. You can still code everything yourself in Files.</p>
+                  </div>
+                )}
+                {sending && <div className="project-message assistant"><span>Meta</span><p>Working on your project…</p></div>}
+                {error && <p className="project-ai-error" role="alert">{error}</p>}
+              </div>
+              <form className="project-tab-chat-composer" onSubmit={sendToAi}>
+                <input value={message} onChange={(event) => setMessage(event.target.value)} placeholder={sending ? 'Meta is working…' : 'Message Meta about this project…'} disabled={sending} />
+                <button type="submit" aria-label="Send" disabled={!message.trim() || sending}><Send aria-hidden="true" /></button>
+              </form>
+            </section>
+          )}
         </section>
 
-        <details className="project-files-drawer" open={fileEntries.length > 0}>
-          <summary>Project files <span>{fileEntries.length}</span></summary>
-          <div className="project-files-list">
-            {fileEntries.length ? fileEntries.map(([path, content]) => (
-              <details className="project-file" key={path}>
-                <summary>{path}</summary>
-                <pre>{content}</pre>
-              </details>
-            )) : <p>No files yet. Ask Meta to build the first version.</p>}
-          </div>
-        </details>
-
-        <form className="project-ai-composer project-detail-composer" onSubmit={sendToAi}>
-          <input
-            value={message}
-            onChange={(event) => setMessage(event.target.value)}
-            placeholder={sending ? 'Meta is working…' : 'Ask Meta to change this project…'}
-            aria-label="Message Meta AI about this project"
-            disabled={sending}
-          />
-          <button type="submit" aria-label="Send message" disabled={!message.trim() || sending}>
-            <Send aria-hidden="true" />
+        <nav className="project-bottom-tabs" aria-label="Project tools">
+          <button type="button" className={activeTab === 'files' ? 'active' : ''} onClick={() => setActiveTab('files')}>
+            <FileCode2 aria-hidden="true" /><span>Files</span>
           </button>
-        </form>
+          <button type="button" className={activeTab === 'preview' ? 'active' : ''} onClick={() => setActiveTab('preview')}>
+            <Eye aria-hidden="true" /><span>Preview</span>
+          </button>
+          <button type="button" className={activeTab === 'chat' ? 'active' : ''} onClick={() => setActiveTab('chat')}>
+            <MessageSquare aria-hidden="true" /><span>Chat</span>
+          </button>
+        </nav>
       </main>
     </AppShell>
   );
