@@ -315,14 +315,6 @@ function Header({ progressCount }: { progressCount: number }) {
           <span className="progress-dot" />
           {progressCount} / {lessons.length} lessons
         </span>
-        <div className="header-icon-actions" aria-label="Workspace shortcuts">
-          <Link href="/projects" className="header-icon-button" title="Projects" aria-label="Projects" data-testid="button-projects">
-            <FolderKanban aria-hidden="true" />
-          </Link>
-          <Link href="/settings" className="header-icon-button" title="Settings" aria-label="Settings" data-testid="button-settings">
-            <Settings aria-hidden="true" />
-          </Link>
-        </div>
         {isLoaded && user ? (
           <div className="account-actions" data-testid="section-account">
             <span className="account-name" title={user.primaryEmailAddress?.emailAddress ?? undefined}>
@@ -356,6 +348,16 @@ function AppShell({ children }: { children: ReactNode }) {
     <div className="app-shell">
       <Header progressCount={progress.completedLessonIds.length} />
       {children}
+      <nav className="bottom-workspace-nav" aria-label="Workspace navigation">
+        <Link href="/projects" className="bottom-workspace-button" aria-label="Projects" data-testid="button-projects">
+          <FolderKanban aria-hidden="true" />
+          <span>Projects</span>
+        </Link>
+        <Link href="/settings" className="bottom-workspace-button" aria-label="Settings" data-testid="button-settings">
+          <Settings aria-hidden="true" />
+          <span>Settings</span>
+        </Link>
+      </nav>
     </div>
   );
 }
