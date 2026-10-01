@@ -1,9 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState, type CSSProperties, type FormEvent, type ReactNode } from 'react';
 import JSZip from 'jszip';
-import { Capacitor } from '@capacitor/core';
-import { SocialLogin } from '@capgo/capacitor-social-login';
-import { ClerkProvider, SignIn, SignUp, useAuth, useClerk, useUser } from '@clerk/react';
-import { shadcn } from '@clerk/themes';
 import { Link, Redirect, Route, Router as WouterRouter, Switch, useLocation, useParams } from 'wouter';
 import {
   ArrowLeft,
@@ -41,11 +37,6 @@ const PROGRESS_EVENT = 'meta-progress-sync';
 const LANGUAGE_KEY = 'meta-language-v1';
 const THEME_KEY = 'meta-theme-v1';
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, '');
-const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY ||
-  'pk_test_YXBwYXJlbnQtc2NvcnBpb24tNjc3MC5jbGVyay5hY2NvdW50cy5kZXYk';
-const clerkProxyUrl = import.meta.env.VITE_CLERK_PROXY_URL;
-const GOOGLE_WEB_CLIENT_ID = '1081262614011-cv8mlkmbmf99e9pc66i1lrmj4k9m1lcm.apps.googleusercontent.com';
-const isNativeAndroid = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android';
 
 type PlayTrack = {
   id: string;
@@ -287,8 +278,8 @@ function readProgress(storageKey: string): Progress {
 }
 
 function useProgress() {
-  const { isLoaded, userId } = useAuth();
-  const storageKey = `${PROGRESS_KEY}:${userId ?? 'guest'}`;
+  const isLoaded = true;
+  const storageKey = `${PROGRESS_KEY}:guest`;
   const [snapshot, setSnapshot] = useState(() => ({
     storageKey,
     progress: readProgress(storageKey),
@@ -359,9 +350,6 @@ function useProgress() {
 }
 
 function Header({ progressCount }: { progressCount: number }) {
-  const { isLoaded, user } = useUser();
-  const { signOut } = useClerk();
-
   return (
     <header className="topbar">
       <Link href="/" className="brand" data-testid="link-academy-home">
@@ -374,26 +362,6 @@ function Header({ progressCount }: { progressCount: number }) {
           <span className="progress-dot" />
           {progressCount} / {lessons.length} lessons
         </span>
-        {isLoaded && user ? (
-          <div className="account-actions" data-testid="section-account">
-            <span className="account-name" title={user.primaryEmailAddress?.emailAddress ?? undefined}>
-              {user.firstName || user.username || 'Learner'}
-            </span>
-            <button
-              type="button"
-              className="account-signout"
-              onClick={() => void signOut({ redirectUrl: basePath || '/' })}
-              data-testid="button-sign-out"
-            >
-              Sign out
-            </button>
-          </div>
-        ) : isLoaded ? (
-          <div className="account-actions">
-            <Link href="/sign-in" className="account-signin" data-testid="link-sign-in">Sign in</Link>
-            <Link href="/sign-up" className="account-join" data-testid="link-sign-up">Create account</Link>
-          </div>
-        ) : null}
         <ThemeToggle />
       </nav>
     </header>
@@ -1430,64 +1398,19 @@ function PricingPage() {
 }
 
 function AccountSettingsPage() {
-  const { user } = useUser();
-  const { signOut } = useClerk();
-  const [confirmingDelete, setConfirmingDelete] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-  const [deleteError, setDeleteError] = useState('');
-
-  const deleteAccount = async () => {
-    if (!user || deleting) return;
-    setDeleting(true);
-    setDeleteError('');
-    try {
-      await user.delete();
-      await signOut({ redirectUrl: basePath || '/' });
-    } catch {
-      setDeleteError('We could not delete your account right now. Please try again or use the account deletion page for support.');
-      setDeleting(false);
-    }
-  };
-
   return (
     <AppShell>
       <main className="account-page">
         <section className="account-card">
           <p className="section-kicker">Account & privacy</p>
-          <h1>Manage your Meta account</h1>
-          <p className="account-email">{user?.primaryEmailAddress?.emailAddress ?? 'Signed-in learner'}</p>
-
+          <h1>Meta accounts are being rebuilt</h1>
+          <p className="account-email">Clerk has been removed from Meta.</p>
           <div className="account-setting-block">
-            <h2>Your data</h2>
-            <p>Meta stores the account information needed for sign-in and your learning progress so you can continue lessons across sessions.</p>
+            <h2>Your local data</h2>
+            <p>Your projects, settings, and lesson progress on this browser remain available while the new Meta authentication system is built.</p>
             <div className="account-setting-links">
               <Link href="/privacy" className="button-secondary">Read privacy policy</Link>
-              <Link href="/delete-account" className="button-secondary">Account deletion help</Link>
             </div>
-          </div>
-
-          <div className="danger-zone">
-            <h2>Delete account</h2>
-            <p>Deleting your account permanently removes the account from Meta's authentication system. This cannot be undone.</p>
-            {!confirmingDelete ? (
-              <button type="button" className="danger-button" onClick={() => setConfirmingDelete(true)}>
-                Delete my account
-              </button>
-            ) : (
-              <div className="delete-confirm">
-                <strong>Delete this account permanently?</strong>
-                <span>You will lose access to this account and its saved learning identity.</span>
-                <div>
-                  <button type="button" className="danger-button" disabled={deleting} onClick={() => void deleteAccount()}>
-                    {deleting ? 'Deleting…' : 'Yes, delete permanently'}
-                  </button>
-                  <button type="button" className="button-secondary" disabled={deleting} onClick={() => setConfirmingDelete(false)}>
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            )}
-            {deleteError && <p className="delete-error" role="alert">{deleteError}</p>}
           </div>
         </section>
       </main>
@@ -1527,7 +1450,7 @@ function PrivacyPage() {
       <article className="policy-card">
         <p className="section-kicker">Privacy</p>
         <h1>Meta privacy overview</h1>
-        <p>Meta is a coding-learning app. Account information is handled through the configured authentication provider, and lesson progress may be stored so learners can continue where they left off.</p>
+        <p>Meta is a coding-learning app. Meta is currently transitioning to its own account system. Lesson progress and project data may be stored locally on your device during this transition.</p>
         <h2>What the app may store</h2>
         <p>Account identifiers, profile details supplied during sign-in, selected learning settings, and lesson progress. The app should only request data needed for learning and account functionality.</p>
         <h2>Device permissions</h2>
@@ -1852,241 +1775,6 @@ function NotFound() {
   );
 }
 
-function clerkAppearanceFor(theme: ThemeMode) {
-  const dark = theme === 'dark';
-  const surface = dark ? '#202732' : '#fffdf7';
-  const input = dark ? '#252d39' : '#f7f3e8';
-  const foreground = dark ? '#f1eee7' : '#263247';
-  const muted = dark ? '#b2bac5' : '#6f706b';
-  const border = dark ? '#434e5e' : '#d9d4c5';
-
-  return {
-    theme: shadcn,
-    cssLayerName: 'clerk',
-    options: {
-      logoPlacement: 'inside' as const,
-      logoLinkUrl: basePath || '/',
-      logoImageUrl: `${window.location.origin}${basePath}/logo.svg`,
-    },
-    variables: {
-      colorPrimary: '#c95238',
-      colorForeground: foreground,
-      colorMutedForeground: muted,
-      colorDanger: dark ? '#ffb4a5' : '#a83d31',
-      colorBackground: surface,
-      colorInput: input,
-      colorInputForeground: foreground,
-      colorNeutral: border,
-      fontFamily: "'DM Sans', sans-serif",
-      borderRadius: '10px',
-    },
-    elements: {
-      rootBox: 'w-full flex justify-center',
-      cardBox: dark
-        ? '!bg-[#202732] !border !border-[#434e5e] !shadow-xl rounded-2xl w-[440px] max-w-full overflow-hidden'
-        : '!bg-[#fffdf7] !border !border-[#d9d4c5] !shadow-xl rounded-2xl w-[440px] max-w-full overflow-hidden',
-      card: '!shadow-none !border-0 !bg-transparent !rounded-none',
-      footer: '!shadow-none !border-0 !bg-transparent !rounded-none',
-      headerTitle: dark ? '!text-[#f1eee7] !font-semibold' : '!text-[#263247] !font-semibold',
-      headerSubtitle: dark ? '!text-[#b2bac5]' : '!text-[#6f706b]',
-      socialButtonsBlockButtonText: dark ? '!text-[#f1eee7] !font-semibold' : '!text-[#263247] !font-semibold',
-      formFieldLabel: dark ? '!text-xs !text-[#f1eee7] !font-medium' : '!text-xs !text-[#263247] !font-medium',
-      footerActionLink: dark ? '!text-[#ffad8f] !font-semibold' : '!text-[#a83d31] !font-semibold',
-      footerActionText: dark ? '!text-[#b2bac5]' : '!text-[#6f706b]',
-      dividerText: dark ? '!text-[#b2bac5]' : '!text-[#6f706b]',
-      identityPreviewEditButton: dark ? '!text-[#ffad8f] !font-semibold' : '!text-[#a83d31] !font-semibold',
-      formFieldSuccessText: dark ? '!text-[#91d3a1]' : '!text-[#2f7058]',
-      alertText: dark ? '!text-[#ffb4a5]' : '!text-[#8f3028]',
-      logoBox: 'mb-3',
-      logoImage: 'h-8 w-8',
-      socialButtonsBlockButton: dark
-        ? '!h-12 !rounded-xl !bg-[#252d39] !border !border-[#434e5e] hover:!bg-[#303a49]'
-        : '!h-12 !rounded-xl !bg-[#fffdf7] !border !border-[#d9d4c5] hover:!bg-[#f7f3e8]',
-      formButtonPrimary: '!h-12 !rounded-xl !bg-[#c95238] hover:!bg-[#ae432e] !text-white !font-semibold',
-      formFieldInput: dark
-        ? '!h-11 !rounded-xl !px-3 !text-sm !bg-[#252d39] !border-[#434e5e] !text-[#f1eee7]'
-        : '!h-11 !rounded-xl !px-3 !text-sm !bg-[#f7f3e8] !border-[#d9d4c5] !text-[#263247]',
-      footerAction: 'pt-4',
-      dividerLine: dark ? '!bg-[#434e5e]' : '!bg-[#d9d4c5]',
-      alert: dark ? '!bg-[#382525] !border-[#75463b]' : '!bg-[#fff4ef] !border-[#e9b8aa]',
-      otpCodeFieldInput: dark
-        ? '!bg-[#252d39] !border-[#434e5e] !text-[#f1eee7]'
-        : '!bg-[#f7f3e8] !border-[#d9d4c5] !text-[#263247]',
-      formFieldRow: 'mb-4',
-      main: 'gap-5',
-    },
-  };
-}
-
-const siteFacts = [
-  { title: 'Six short lessons', detail: 'Build one useful idea at a time.' },
-  { title: 'Twelve language paths', detail: 'Compare the same foundations across languages.' },
-  { title: 'Hands-on practice', detail: 'Try each concept, check your answer, and get a hint.' },
-  { title: 'Progress saved to your account', detail: 'Pick up where you left off on this browser.' },
-];
-
-function SiteFactRotator() {
-  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const [activeFact, setActiveFact] = useState(0);
-  const [deleting, setDeleting] = useState(false);
-  const [paused, setPaused] = useState(prefersReducedMotion);
-  const [typedCharacters, setTypedCharacters] = useState(() => (
-    prefersReducedMotion ? siteFacts[0].title.length + siteFacts[0].detail.length : 0
-  ));
-  const fact = siteFacts[activeFact];
-  const totalCharacters = fact.title.length + fact.detail.length;
-  const visibleTitle = fact.title.slice(0, Math.min(typedCharacters, fact.title.length));
-  const visibleDetail = typedCharacters > fact.title.length
-    ? fact.detail.slice(0, typedCharacters - fact.title.length)
-    : '';
-  const showCaret = !prefersReducedMotion && !paused;
-
-  useEffect(() => {
-    if (paused || prefersReducedMotion) return;
-
-    let delay: number;
-    let update: () => void;
-    if (!deleting && typedCharacters < totalCharacters) {
-      delay = typedCharacters === fact.title.length ? 360 : typedCharacters < fact.title.length ? 43 : 30;
-      update = () => setTypedCharacters((current) => current + 1);
-    } else if (!deleting) {
-      delay = 2500;
-      update = () => setDeleting(true);
-    } else if (typedCharacters > 0) {
-      delay = 15;
-      update = () => setTypedCharacters((current) => current - 1);
-    } else {
-      delay = 240;
-      update = () => {
-        setActiveFact((current) => (current + 1) % siteFacts.length);
-        setDeleting(false);
-      };
-    }
-
-    const timer = window.setTimeout(update, delay);
-    return () => window.clearTimeout(timer);
-  }, [activeFact, deleting, fact.detail.length, fact.title.length, paused, prefersReducedMotion, totalCharacters, typedCharacters]);
-
-  return (
-    <div className="auth-note" aria-label="About Meta" data-paused={paused || prefersReducedMotion} data-testid="section-site-facts">
-      <span className="progress-dot" aria-hidden="true" />
-      <div className="site-fact-copy" key={activeFact} aria-live="off">
-        <strong data-testid="text-site-fact-title">
-          {visibleTitle}
-          {typedCharacters <= fact.title.length && showCaret && <i className="typing-caret" aria-hidden="true" />}
-        </strong>
-        <span data-testid="text-site-fact-detail">
-          {visibleDetail}
-          {typedCharacters > fact.title.length && showCaret && <i className="typing-caret" aria-hidden="true" />}
-        </span>
-      </div>
-      <button
-        type="button"
-        className="site-fact-toggle"
-        onClick={() => setPaused((current) => !current)}
-        aria-label={paused ? 'Resume site facts' : 'Pause site facts'}
-        aria-pressed={paused}
-        data-testid="button-toggle-site-facts"
-      >
-        {paused ? <Play aria-hidden="true" /> : <Pause aria-hidden="true" />}
-      </button>
-    </div>
-  );
-}
-
-function NativeGoogleButton() {
-  const clerk = useClerk();
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState('');
-
-  useEffect(() => {
-    if (!isNativeAndroid) return;
-    void SocialLogin.initialize({
-      google: { webClientId: GOOGLE_WEB_CLIENT_ID, mode: 'online' },
-    });
-  }, []);
-
-  if (!isNativeAndroid) return null;
-
-  const onGoogle = async () => {
-    setBusy(true);
-    setError('');
-    try {
-      const result = await SocialLogin.login({
-        provider: 'google',
-        options: { scopes: ['email', 'profile'] },
-      });
-      if (result.provider !== 'google') throw new Error('Unexpected sign-in provider.');
-      const idToken = result.result.idToken;
-      if (!idToken) throw new Error('Google did not return an ID token.');
-      const signInOrUp = await clerk.authenticateWithGoogleOneTap({ token: idToken });
-      await clerk.handleGoogleOneTapCallback(signInOrUp, {
-        signInUrl: `${basePath}/sign-in`,
-        signUpUrl: `${basePath}/sign-up`,
-      });
-      window.location.assign(`${basePath}/user-portal`);
-    } catch (cause) {
-      const message = cause instanceof Error ? cause.message : String(cause);
-      if (!/cancel/i.test(message)) setError('Google sign-in could not be completed. Please try again.');
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  return (
-    <div className="native-google-auth">
-      <button type="button" className="native-google-button" disabled={busy} onClick={() => void onGoogle()}>
-        <strong aria-hidden="true">G</strong>
-        {busy ? 'Opening Google…' : 'Continue with Google'}
-      </button>
-      {error && <p className="native-google-error" role="alert">{error}</p>}
-      <div className="native-auth-divider"><span>or</span></div>
-    </div>
-  );
-}
-
-function AuthPage({ mode }: { mode: 'sign-in' | 'sign-up' }) {
-  const isSignIn = mode === 'sign-in';
-
-  return (
-    <main className="auth-page">
-      <div className="auth-topbar">
-        <div className="brand auth-brand" data-testid="section-auth-brand">
-          <span className="brand-mark"><Code2 aria-hidden="true" /></span>
-          <span>meta</span>
-        </div>
-        <ThemeToggle />
-      </div>
-      <div className="auth-layout">
-        <section className="auth-copy">
-          <p className="section-kicker">A good next step</p>
-          <h1>{isSignIn ? <>Welcome<br />back to <em>Meta.</em></> : <>Make room<br />for <em>curiosity.</em></>}</h1>
-          <p>{isSignIn
-            ? 'Sign in to pick up your learning path and keep your lesson progress organized on this browser.'
-            : 'Create an account to save a learner profile and keep your progress organized on this browser.'}</p>
-          <SiteFactRotator />
-        </section>
-        <section className="auth-form" aria-label={isSignIn ? 'Sign in to Meta' : 'Create your Meta account'}>
-          <NativeGoogleButton />
-          {isSignIn ? (
-            <SignIn
-              routing="path"
-              path={`${basePath}/sign-in`}
-              signUpUrl={`${basePath}/sign-up`}
-            />
-          ) : (
-            <SignUp
-              routing="path"
-              path={`${basePath}/sign-up`}
-              signInUrl={`${basePath}/sign-in`}
-            />
-          )}
-        </section>
-      </div>
-    </main>
-  );
-}
-
 function HomeRedirect() {
   return <Redirect to="/user-portal" />;
 }
@@ -2095,18 +1783,7 @@ function UserPortal() {
   return <HomePage />;
 }
 
-function ProtectedRoutes() {
-  const { isLoaded, isSignedIn } = useAuth();
-  const [location] = useLocation();
-
-  if (!isLoaded) {
-    return <main className="auth-loading" aria-live="polite">Checking your sign-in…</main>;
-  }
-  if (!isSignedIn) {
-    const destination = location === '/' ? `${basePath}/user-portal` : `${basePath}${location}`;
-    return <Redirect to={`/sign-in?redirect_url=${encodeURIComponent(destination)}`} />;
-  }
-
+function MainRoutes() {
   return (
     <Switch>
       <Route path="/" component={HomeRedirect} />
@@ -2119,51 +1796,19 @@ function ProtectedRoutes() {
       <Route path="/projects" component={ProjectsPage} />
       <Route path="/settings" component={SettingsPage} />
       <Route path="/pricing" component={PricingPage} />
+      <Route path="/privacy" component={PrivacyPage} />
+      <Route path="/delete-account" component={DeleteAccountPage} />
+      <Route path="/sign-in/*?" component={HomeRedirect} />
+      <Route path="/sign-up/*?" component={HomeRedirect} />
       <Route component={NotFound} />
     </Switch>
-  );
-}
-
-function stripBase(path: string): string {
-  return basePath && path.startsWith(basePath)
-    ? path.slice(basePath.length) || '/'
-    : path;
-}
-
-function ClerkProviderWithRoutes() {
-  const [, setLocation] = useLocation();
-  const { theme } = useTheme();
-  const appearance = useMemo(() => clerkAppearanceFor(theme), [theme]);
-
-  return (
-    <ClerkProvider
-      publishableKey={clerkPubKey}
-      proxyUrl={clerkProxyUrl}
-      appearance={appearance}
-      signInUrl={`${basePath}/sign-in`}
-      signUpUrl={`${basePath}/sign-up`}
-      localization={{
-        signIn: { start: { title: 'Welcome back to Meta', subtitle: 'Continue your learning path' } },
-        signUp: { start: { title: 'Start learning with Meta', subtitle: 'Create your learner account' } },
-      }}
-      routerPush={(to) => setLocation(stripBase(to))}
-      routerReplace={(to) => setLocation(stripBase(to), { replace: true })}
-    >
-      <Switch>
-        <Route path="/sign-in/*?" component={() => <AuthPage mode="sign-in" />} />
-        <Route path="/sign-up/*?" component={() => <AuthPage mode="sign-up" />} />
-        <Route path="/privacy" component={PrivacyPage} />
-        <Route path="/delete-account" component={DeleteAccountPage} />
-        <Route component={ProtectedRoutes} />
-      </Switch>
-    </ClerkProvider>
   );
 }
 
 function Router() {
   return (
     <WouterRouter base={basePath}>
-      <ClerkProviderWithRoutes />
+      <MainRoutes />
     </WouterRouter>
   );
 }
