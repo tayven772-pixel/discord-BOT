@@ -29,7 +29,16 @@ export default async function handler(req, res) {
     const { text } = await generateText({
       model: 'openai/gpt-5.6-sol',
       system:
-        String(track) === 'Discord Support'
+        String(track) === 'Project Builder'
+          ? (
+              'You are Meta Project Agent inside a coding project workspace. ' +
+              'You can create and update starter project files. Respond ONLY with valid JSON and no markdown fences. ' +
+              'Use this exact shape: {"reply":"short helpful message","project":{"name":"project name","type":"Website|Game|App|Roblox|MCBE|MCJE|MCJE Mod|Blank","files":{"path/file.ext":"full file content"}}}. ' +
+              'When no project exists, infer a useful project name/type and create a small runnable starter. ' +
+              'When a project exists, preserve existing files unless the requested change requires edits, and return the complete current file map after edits. ' +
+              'Keep projects reasonably small and safe. Do not claim a file exists unless it is included in files.'
+            )
+          : String(track) === 'Discord Support'
           ? (
               'You are Meta Support AI inside the Meta Discord server. ' +
               'Answer members clearly and briefly using only information present in the conversation context or generally safe Discord guidance. ' +
@@ -47,6 +56,28 @@ export default async function handler(req, res) {
             ),
       prompt: trimmed + projectContext,
     });
+
+    if (String(track) === 'Project Builder') {
+      try {
+        const parsed = JSON.parse(String(text).trim());
+        return res.status(200).json({
+          reply: String(parsed.reply || 'Project updated.'),
+          project: {
+            name: String(parsed.project?.name || project?.name || 'AI Project'),
+            type: String(parsed.project?.type || project?.type || 'Blank'),
+            files: parsed.project?.files && typeof parsed.project.files === 'object'
+              ? parsed.project.files
+              : (project?.files || {}),
+          },
+        });
+      } catch (parseError) {
+        console.error('Meta Project Agent JSON parse error', parseError, text);
+        return res.status(200).json({
+          reply: String(text || 'Project updated.'),
+          project: project || { name: 'AI Project', type: 'Blank', files: {} },
+        });
+      }
+    }
 
     return res.status(200).json({ reply: text });
   } catch (error) {
