@@ -1432,3 +1432,16 @@ html[data-reduced-motion='true'] *::after {
   .settings-group .settings-row > div { min-width: 0; }
   .settings-select { min-width: 118px; }
 }
+
+
+/* Ensure dotted texture is visible in light mode */
+:root:not([data-theme='dark']) .project-editor-page,
+:root:not([data-theme='dark']) .project-editor-body,
+:root:not([data-theme='dark']) .project-chat-tab,
+:root:not([data-theme='dark']) .project-preview-panel .editor-empty,
+:root:not([data-theme='dark']) .file-sidebar {
+  background-color: hsl(var(--background)) !important;
+  background-image: radial-gradient(circle at 1px 1px, rgb(87 111 145 / .24) 1.15px, transparent 1.2px) !important;
+  background-size: 22px 22px !important;
+  background-position: 0 0 !important;
+}
