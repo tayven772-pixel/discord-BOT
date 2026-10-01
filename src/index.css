@@ -1336,3 +1336,26 @@ body { padding-top: env(safe-area-inset-top); padding-right: env(safe-area-inset
 :root[data-theme='dark'] .icon-only-button:hover {
   background: #172554;
 }
+
+
+/* Restore Meta dotted background */
+.project-editor-page,
+.project-editor-body,
+.project-chat-tab,
+.project-preview-panel .editor-empty,
+.file-sidebar {
+  background-image: radial-gradient(circle at 1px 1px, hsl(216 25% 72% / .28) 1px, transparent 0);
+  background-size: 22px 22px;
+}
+
+.project-chat-tab {
+  background-color: hsl(var(--background));
+}
+
+:root[data-theme='dark'] .project-editor-page,
+:root[data-theme='dark'] .project-editor-body,
+:root[data-theme='dark'] .project-chat-tab,
+:root[data-theme='dark'] .project-preview-panel .editor-empty,
+:root[data-theme='dark'] .file-sidebar {
+  background-image: radial-gradient(circle at 1px 1px, rgb(96 165 250 / .14) 1px, transparent 0);
+}
