@@ -1886,7 +1886,7 @@ function clerkAppearanceFor(theme: ThemeMode) {
       headerTitle: dark ? '!text-[#f1eee7] !font-semibold' : '!text-[#263247] !font-semibold',
       headerSubtitle: dark ? '!text-[#b2bac5]' : '!text-[#6f706b]',
       socialButtonsBlockButtonText: dark ? '!text-[#f1eee7] !font-semibold' : '!text-[#263247] !font-semibold',
-      formFieldLabel: dark ? '!text-[#f1eee7] !font-medium' : '!text-[#263247] !font-medium',
+      formFieldLabel: dark ? '!text-xs !text-[#f1eee7] !font-medium' : '!text-xs !text-[#263247] !font-medium',
       footerActionLink: dark ? '!text-[#ffad8f] !font-semibold' : '!text-[#a83d31] !font-semibold',
       footerActionText: dark ? '!text-[#b2bac5]' : '!text-[#6f706b]',
       dividerText: dark ? '!text-[#b2bac5]' : '!text-[#6f706b]',
@@ -1900,8 +1900,8 @@ function clerkAppearanceFor(theme: ThemeMode) {
         : '!h-12 !rounded-xl !bg-[#fffdf7] !border !border-[#d9d4c5] hover:!bg-[#f7f3e8]',
       formButtonPrimary: '!h-12 !rounded-xl !bg-[#c95238] hover:!bg-[#ae432e] !text-white !font-semibold',
       formFieldInput: dark
-        ? '!h-12 !rounded-xl !bg-[#252d39] !border-[#434e5e] !text-[#f1eee7]'
-        : '!h-12 !rounded-xl !bg-[#f7f3e8] !border-[#d9d4c5] !text-[#263247]',
+        ? '!h-11 !rounded-xl !px-3 !text-sm !bg-[#252d39] !border-[#434e5e] !text-[#f1eee7]'
+        : '!h-11 !rounded-xl !px-3 !text-sm !bg-[#f7f3e8] !border-[#d9d4c5] !text-[#263247]',
       footerAction: 'pt-4',
       dividerLine: dark ? '!bg-[#434e5e]' : '!bg-[#d9d4c5]',
       alert: dark ? '!bg-[#382525] !border-[#75463b]' : '!bg-[#fff4ef] !border-[#e9b8aa]',
