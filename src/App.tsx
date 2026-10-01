@@ -320,7 +320,6 @@ function Header({ progressCount }: { progressCount: number }) {
             <span className="account-name" title={user.primaryEmailAddress?.emailAddress ?? undefined}>
               {user.firstName || user.username || 'Learner'}
             </span>
-            <Link href="/account" className="account-signin" data-testid="link-account-settings">Account</Link>
             <button
               type="button"
               className="account-signout"
@@ -675,8 +674,11 @@ function SettingsPage() {
             <Link href="/pricing" className="button-secondary">View plans</Link>
           </div>
           <div className="settings-row">
-            <div><strong>Account & privacy</strong><span>Manage your account or delete it.</span></div>
-            <Link href="/account" className="button-secondary">Manage</Link>
+            <div>
+              <strong>Account & privacy</strong>
+              <span>Manage your profile, privacy, sign-in, and account deletion.</span>
+            </div>
+            <Link href="/account" className="button-secondary">Account settings</Link>
           </div>
         </section>
       </main>
