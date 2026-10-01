@@ -1056,3 +1056,283 @@ body { padding-top: env(safe-area-inset-top); padding-right: env(safe-area-inset
   .project-download-button { font-size: 0; }
   .project-download-button svg { width: 17px; height: 17px; }
 }
+
+
+/* Cleaner mobile project workspace */
+.project-editor-page {
+  height: 100dvh;
+  min-height: 100dvh;
+  grid-template-rows: 58px minmax(0, 1fr) 66px;
+  background: hsl(var(--background));
+}
+
+.project-editor-head {
+  position: relative;
+  z-index: 5;
+  padding: max(8px, env(safe-area-inset-top)) 12px 8px;
+  min-height: 58px;
+  border-bottom: 1px solid hsl(var(--border));
+  background: hsl(var(--background) / .98);
+  backdrop-filter: blur(18px);
+}
+
+.project-editor-title strong {
+  font-size: 13px;
+  line-height: 1.2;
+}
+
+.project-editor-title span {
+  margin-top: 2px;
+  color: #64748b;
+  font-size: 9px;
+}
+
+.project-download-button {
+  border-color: transparent;
+  background: transparent;
+}
+
+.project-download-button:hover:not(:disabled) {
+  background: #dbeafe;
+}
+
+.project-editor-body {
+  background: hsl(var(--background));
+}
+
+.project-chat-tab {
+  width: min(760px, 100%);
+  height: 100%;
+  padding: 0;
+}
+
+.project-chat-tab .project-conversation {
+  padding: 18px 16px 92px;
+  scroll-behavior: smooth;
+}
+
+.project-chat-empty {
+  min-height: calc(100dvh - 230px);
+}
+
+.project-chat-empty svg {
+  width: 38px;
+  height: 38px;
+}
+
+.project-chat-empty h2 {
+  margin-top: 14px;
+  font-size: 28px;
+}
+
+.project-chat-empty p {
+  max-width: 430px;
+  font-size: 12px;
+}
+
+.project-tab-chat-composer {
+  position: absolute;
+  left: 50%;
+  bottom: calc(66px + max(10px, env(safe-area-inset-bottom)));
+  z-index: 4;
+  width: min(700px, calc(100% - 24px));
+  margin: 0;
+  transform: translateX(-50%);
+  border-radius: 18px;
+  box-shadow: 0 10px 32px rgb(15 23 42 / .12);
+}
+
+.project-bottom-tabs {
+  position: relative;
+  z-index: 6;
+  min-height: 66px;
+  border-top: 1px solid hsl(var(--border));
+  background: hsl(var(--background) / .98);
+  box-shadow: 0 -8px 24px rgb(15 23 42 / .04);
+}
+
+.project-bottom-tabs button {
+  min-height: 58px;
+  gap: 4px;
+  font-size: 10px;
+}
+
+.project-bottom-tabs button.active {
+  color: #2563eb;
+}
+
+.project-bottom-tabs button.active::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  width: 30px;
+  height: 2px;
+  border-radius: 999px;
+  background: #2563eb;
+}
+
+.project-bottom-tabs button {
+  position: relative;
+}
+
+.code-workspace {
+  height: 100%;
+}
+
+.file-sidebar {
+  background: hsl(var(--background));
+}
+
+.code-editor-panel {
+  background: #0b1220;
+}
+
+.editor-empty {
+  color: #e2e8f0;
+}
+
+.editor-empty p {
+  color: #94a3b8;
+}
+
+@media (max-width: 650px) {
+  .project-editor-page {
+    height: 100dvh;
+    min-height: 100dvh;
+    grid-template-rows: 58px minmax(0, 1fr) 68px;
+  }
+
+  .project-editor-head {
+    grid-template-columns: 38px minmax(0, 1fr) 38px;
+    gap: 8px;
+    padding-inline: 10px;
+  }
+
+  .project-download-button {
+    width: 36px;
+    height: 36px;
+    min-height: 36px;
+    padding: 0;
+    display: grid;
+    place-items: center;
+    border-radius: 9px;
+  }
+
+  .project-download-button span {
+    display: none;
+  }
+
+  .project-download-button svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .code-workspace {
+    grid-template-columns: 1fr;
+    grid-template-rows: 112px minmax(0, 1fr);
+  }
+
+  .file-sidebar {
+    border-right: 0;
+    border-bottom: 1px solid hsl(var(--border));
+    overflow: hidden;
+  }
+
+  .file-sidebar-head {
+    height: 42px;
+    padding: 0 10px 0 12px;
+  }
+
+  .file-list {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding: 7px 10px 10px;
+    scrollbar-width: none;
+  }
+
+  .file-list::-webkit-scrollbar {
+    display: none;
+  }
+
+  .file-list-item {
+    width: auto;
+    min-width: max-content;
+    padding: 8px 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+  }
+
+  .file-list-item span {
+    max-width: 150px;
+    font-size: 9px;
+  }
+
+  .file-list-item.active {
+    border-color: #60a5fa;
+  }
+
+  .new-file-inline {
+    position: absolute;
+    left: 8px;
+    right: 8px;
+    top: 44px;
+    z-index: 3;
+    padding: 7px;
+    border: 1px solid #cbd5e1;
+    border-radius: 9px;
+    background: hsl(var(--background));
+    box-shadow: 0 10px 28px rgb(15 23 42 / .16);
+  }
+
+  .manual-code-editor {
+    padding: 14px;
+    font-size: 12px;
+  }
+
+  .code-editor-toolbar {
+    min-height: 40px;
+    padding: 0 10px;
+  }
+
+  .project-chat-tab .project-conversation {
+    padding: 16px 14px 96px;
+  }
+
+  .project-chat-empty {
+    min-height: calc(100dvh - 240px);
+    padding-inline: 24px;
+  }
+
+  .project-tab-chat-composer {
+    bottom: calc(68px + max(10px, env(safe-area-inset-bottom)));
+    width: calc(100% - 20px);
+    min-height: 50px;
+    padding: 5px 6px 5px 13px;
+  }
+
+  .project-tab-chat-composer button {
+    width: 38px;
+    height: 38px;
+  }
+
+  .project-bottom-tabs {
+    min-height: 68px;
+    padding-bottom: max(2px, env(safe-area-inset-bottom));
+  }
+
+  .project-bottom-tabs button {
+    min-height: 58px;
+  }
+}
+
+:root[data-theme='dark'] .project-editor-head,
+:root[data-theme='dark'] .project-bottom-tabs,
+:root[data-theme='dark'] .file-sidebar {
+  background: #101827;
+}
+
+:root[data-theme='dark'] .project-download-button:hover:not(:disabled),
+:root[data-theme='dark'] .icon-only-button:hover {
+  background: #172554;
+}
