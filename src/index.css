@@ -670,11 +670,6 @@ body { padding-top: env(safe-area-inset-top); padding-right: env(safe-area-inset
 
 
 /* Workspace shortcuts and billing */
-.header-icon-actions { display: flex; align-items: center; gap: 6px; }
-.header-icon-button { width: 34px; height: 34px; display: grid; place-items: center; border: 0; border-radius: 8px; background: transparent; color: #475569; transition: color .18s, transform .18s; }
-.header-icon-button:hover { color: #2563eb; transform: translateY(-1px); }
-.header-icon-button:focus-visible { outline: 2px solid #2563eb; outline-offset: 2px; }
-.header-icon-button svg { width: 18px; height: 18px; }
 
 .workspace-page { width: min(1080px, calc(100% - 40px)); margin: 0 auto; padding: 42px 0 80px; }
 .workspace-head { display: flex; justify-content: space-between; align-items: end; gap: 24px; margin-bottom: 26px; }
@@ -741,3 +736,48 @@ body { padding-top: env(safe-area-inset-top); padding-right: env(safe-area-inset
   .new-project-grid { grid-template-columns: 1fr 1fr; }
   .settings-row { align-items: flex-start; flex-direction: column; }
 }
+
+
+/* Bottom workspace navigation */
+.app-shell { padding-bottom: 74px; }
+.bottom-workspace-nav {
+  position: fixed;
+  left: 50%;
+  bottom: max(10px, env(safe-area-inset-bottom));
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  transform: translateX(-50%);
+}
+.bottom-workspace-button {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-width: 58px;
+  min-height: 50px;
+  border: 0;
+  background: transparent;
+  color: #475569;
+  font-size: 9px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: color .18s, transform .18s;
+}
+.bottom-workspace-button:hover {
+  color: #2563eb;
+  transform: translateY(-2px);
+}
+.bottom-workspace-button:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 4px;
+  border-radius: 10px;
+}
+.bottom-workspace-button svg {
+  width: 21px;
+  height: 21px;
+}
+:root[data-theme='dark'] .bottom-workspace-button { color: #cbd5e1; }
+:root[data-theme='dark'] .bottom-workspace-button:hover { color: #60a5fa; }
