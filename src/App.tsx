@@ -33,6 +33,82 @@ const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY ||
   'pk_test_c21hc2hpbmctc2hlZXBkb2ctMTE5LmNsZXJrLmFjY291bnRzLmRldiQ';
 const clerkProxyUrl = import.meta.env.VITE_CLERK_PROXY_URL;
 
+type PlayTrack = {
+  id: string;
+  title: string;
+  shortTitle: string;
+  description: string;
+  outcome: string;
+  skills: string[];
+  projects: string[];
+};
+
+const playTracks: PlayTrack[] = [
+  {
+    id: 'games',
+    title: 'Game Development',
+    shortTitle: 'Games',
+    description: 'Learn loops, input, state, collisions, scoring, and game logic by building small playable projects.',
+    outcome: 'Build a playable browser game from a blank project.',
+    skills: ['Game loops', 'Input', 'State', 'Collision logic'],
+    projects: ['Clicker challenge', 'Dodge game', 'Top-down arena'],
+  },
+  {
+    id: 'websites',
+    title: 'Website Development',
+    shortTitle: 'Websites',
+    description: 'Build responsive pages while learning HTML, CSS, JavaScript, layout, components, and accessibility.',
+    outcome: 'Publish a responsive multi-section website.',
+    skills: ['HTML', 'CSS', 'Responsive design', 'JavaScript'],
+    projects: ['Profile page', 'Landing page', 'Interactive dashboard'],
+  },
+  {
+    id: 'apps',
+    title: 'App Development',
+    shortTitle: 'Apps',
+    description: 'Turn ideas into useful apps with interfaces, navigation, saved data, validation, and mobile-first design.',
+    outcome: 'Build an installable app-style project with persistent data.',
+    skills: ['UI state', 'Navigation', 'Forms', 'Persistence'],
+    projects: ['To-do app', 'Study tracker', 'Habit dashboard'],
+  },
+  {
+    id: 'roblox',
+    title: 'Roblox Studio',
+    shortTitle: 'Roblox',
+    description: 'Learn Luau through Roblox-style gameplay systems, interactions, UI, events, and reusable modules.',
+    outcome: 'Build a small Roblox gameplay system you understand line by line.',
+    skills: ['Luau', 'Events', 'Parts', 'ModuleScripts'],
+    projects: ['Coin pickup', 'Checkpoint system', 'Round manager'],
+  },
+  {
+    id: 'mcbe',
+    title: 'Minecraft Bedrock Add-ons',
+    shortTitle: 'MCBE',
+    description: 'Learn Bedrock behavior/resource pack structure, JSON, Script API basics, custom items, entities, and gameplay systems.',
+    outcome: 'Build a working .mcaddon-ready project structure.',
+    skills: ['Manifests', 'JSON', 'Script API', 'Behavior packs'],
+    projects: ['Custom item', 'Queue command', 'Practice utility'],
+  },
+  {
+    id: 'mcje',
+    title: 'Minecraft Java Edition',
+    shortTitle: 'MCJE',
+    description: 'Learn Java Edition commands, datapacks, resource packs, and the concepts behind server-side gameplay systems.',
+    outcome: 'Build a reusable Java Edition datapack project.',
+    skills: ['Datapacks', 'Functions', 'Predicates', 'Resource packs'],
+    projects: ['Custom advancement', 'Arena functions', 'Utility datapack'],
+  },
+  {
+    id: 'mcje-mods',
+    title: 'Minecraft Java Mods',
+    shortTitle: 'MCJE Mods',
+    description: 'Learn Java mod structure, registries, events, items, blocks, and gameplay features with a guided modding path.',
+    outcome: 'Build a small Java mod with a custom gameplay feature.',
+    skills: ['Java', 'Registries', 'Events', 'Items & blocks'],
+    projects: ['Custom item', 'Custom block', 'Simple combat mechanic'],
+  },
+];
+
 if (!clerkPubKey) {
   throw new Error('Missing VITE_CLERK_PUBLISHABLE_KEY in the environment');
 }
@@ -199,6 +275,7 @@ function Header({ progressCount }: { progressCount: number }) {
       </Link>
       <nav className="top-links" aria-label="Main navigation">
         <Link href="/" data-testid="link-explore">Explore</Link>
+        <Link href="/play" data-testid="link-lesson-play">Lesson Play</Link>
         <a href="/#learning-path" data-testid="link-learning-path">Learning path</a>
         <span className="top-progress" data-testid="status-lessons-completed">
           <span className="progress-dot" />
@@ -350,6 +427,9 @@ function HomePage() {
           </div>
         </section>
 
+
+        <LessonPlaySection />
+
         <section className="pathway" id="learning-path" aria-labelledby="path-heading">
           <div className="pathway-intro">
             <p className="section-kicker">Your first six steps</p>
@@ -377,6 +457,131 @@ function HomePage() {
         <footer className="footer"><span>META — LEARN THE IDEA, THEN THE CODE.</span><span>A growing library for your first steps.</span></footer>
       </main>
     </AppShell>
+  );
+}
+
+
+function LessonPlaySection() {
+  return (
+    <section className="play-section" id="lesson-play" aria-labelledby="lesson-play-heading">
+      <div className="section-heading">
+        <div>
+          <p className="section-kicker">Lesson Play / build to learn</p>
+          <h2 id="lesson-play-heading">Choose what you want to make.</h2>
+          <p className="section-sub">Each track teaches the coding idea, then turns it into a real project instead of stopping at a quiz.</p>
+        </div>
+        <Link href="/play" className="text-link" data-testid="link-open-lesson-play">
+          Open Lesson Play <ArrowRight aria-hidden="true" />
+        </Link>
+      </div>
+      <div className="play-grid">
+        {playTracks.map((track) => (
+          <Link href={`/play/${track.id}`} className="play-card" key={track.id} data-testid={`card-play-${track.id}`}>
+            <span className="play-card-icon" aria-hidden="true">{track.shortTitle.slice(0, 2).toUpperCase()}</span>
+            <div>
+              <strong>{track.title}</strong>
+              <p>{track.description}</p>
+            </div>
+            <ArrowRight aria-hidden="true" />
+          </Link>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function PlayPage() {
+  const params = useParams<{ track?: string }>();
+  const selected = playTracks.find((track) => track.id === params.track);
+
+  return (
+    <AppShell>
+      <main className="lesson-main play-page">
+        <div className="lesson-head">
+          <Link href="/user-portal" className="back-link"><ArrowLeft aria-hidden="true" /> Back to Meta</Link>
+          <div className="lesson-heading-row">
+            <div>
+              <div className="eyebrow"><span className="eyebrow-line" /> Lesson Play</div>
+              <h1>{selected ? selected.title : 'Build something real.'}</h1>
+              <p className="lesson-sub">
+                {selected
+                  ? selected.description
+                  : 'Pick a project track. Meta teaches the concept first, then gives you a guided build mission.'}
+              </p>
+            </div>
+            <div className="lesson-meta"><Play aria-hidden="true" /> Project-based learning</div>
+          </div>
+        </div>
+
+        {!selected ? (
+          <section className="play-hub-grid" aria-label="Lesson Play tracks">
+            {playTracks.map((track) => (
+              <Link href={`/play/${track.id}`} className="play-hub-card" key={track.id}>
+                <span className="play-hub-kicker">{track.shortTitle}</span>
+                <h2>{track.title}</h2>
+                <p>{track.description}</p>
+                <span className="play-outcome">{track.outcome}</span>
+                <span className="play-open">Start track <ArrowRight aria-hidden="true" /></span>
+              </Link>
+            ))}
+          </section>
+        ) : (
+          <section className="play-track-layout">
+            <article className="play-track-main">
+              <p className="section-kicker">Your mission</p>
+              <h2>{selected.outcome}</h2>
+              <p className="concept-intro">
+                You will move through short explain → try → build steps. Every project is broken into small checkpoints so you learn why the code works instead of only copying it.
+              </p>
+              <div className="mission-steps">
+                {selected.projects.map((project, index) => (
+                  <div className="mission-step" key={project}>
+                    <span>{String(index + 1).padStart(2, '0')}</span>
+                    <div>
+                      <strong>{project}</strong>
+                      <p>{index === 0 ? 'Starter mission — learn the core idea.' : index === 1 ? 'Practice mission — change and extend the idea.' : 'Build mission — combine the skills into your own version.'}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <Link href="/learn/output" className="button-primary">Start with the coding foundation <ArrowRight aria-hidden="true" /></Link>
+            </article>
+            <aside className="play-track-sidebar">
+              <p className="sidebar-title"><span>Skills in this track</span></p>
+              {selected.skills.map((skill) => <span className="skill-chip" key={skill}>{skill}</span>)}
+              <div className="play-note">
+                <strong>Build-first rule</strong>
+                <span>Hints explain the next move, but Meta does not hand you the full final project before you try it.</span>
+              </div>
+            </aside>
+          </section>
+        )}
+      </main>
+    </AppShell>
+  );
+}
+
+function PrivacyPage() {
+  return (
+    <main className="policy-page">
+      <Link href="/" className="brand policy-brand">
+        <span className="brand-mark"><Code2 aria-hidden="true" /></span>
+        <span>meta</span>
+      </Link>
+      <article className="policy-card">
+        <p className="section-kicker">Privacy</p>
+        <h1>Meta privacy overview</h1>
+        <p>Meta is a coding-learning app. Account information is handled through the configured authentication provider, and lesson progress may be stored so learners can continue where they left off.</p>
+        <h2>What the app may store</h2>
+        <p>Account identifiers, profile details supplied during sign-in, selected learning settings, and lesson progress. The app should only request data needed for learning and account functionality.</p>
+        <h2>Device permissions</h2>
+        <p>The core learning experience does not require contacts, call logs, SMS, precise location, microphone, camera, or background location.</p>
+        <h2>Children and families</h2>
+        <p>Store listing age targeting and any child-directed features must be configured accurately in Google Play Console. Features and data practices should match the audience selected there.</p>
+        <h2>Account and data requests</h2>
+        <p>Users should be able to contact the app publisher for privacy questions, account help, and deletion requests using the support contact published in the store listing.</p>
+      </article>
+    </main>
   );
 }
 
@@ -897,6 +1102,8 @@ function ProtectedRoutes() {
       <Route path="/" component={HomeRedirect} />
       <Route path="/user-portal" component={UserPortal} />
       <Route path="/learn/:lessonId" component={LessonPage} />
+      <Route path="/play" component={PlayPage} />
+      <Route path="/play/:track" component={PlayPage} />
       <Route component={NotFound} />
     </Switch>
   );
@@ -930,6 +1137,7 @@ function ClerkProviderWithRoutes() {
       <Switch>
         <Route path="/sign-in/*?" component={() => <AuthPage mode="sign-in" />} />
         <Route path="/sign-up/*?" component={() => <AuthPage mode="sign-up" />} />
+        <Route path="/privacy" component={PrivacyPage} />
         <Route component={ProtectedRoutes} />
       </Switch>
     </ClerkProvider>
