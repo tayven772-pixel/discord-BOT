@@ -1342,6 +1342,22 @@ function SettingsPage() {
 
         <section className="settings-group">
           <div className="settings-group-head">
+            <h2>Android app</h2>
+            <p>Install Meta directly on your Android phone.</p>
+          </div>
+          <div className="settings-row">
+            <div>
+              <strong>Download Meta APK</strong>
+              <span>Get the latest Android build. Android may ask you to allow installs from your browser.</span>
+            </div>
+            <a className="button-primary" href="https://github.com/tayven772-pixel/discord-BOT/releases/download/meta-latest/Meta-latest.apk">
+              <Download aria-hidden="true" /> Download APK
+            </a>
+          </div>
+        </section>
+
+        <section className="settings-group">
+          <div className="settings-group-head">
             <h2>Account & billing</h2>
             <p>Manage your plan, account, and privacy options.</p>
           </div>
