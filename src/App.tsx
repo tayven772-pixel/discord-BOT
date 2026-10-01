@@ -865,13 +865,27 @@ function ProjectPage() {
   const [, setLocation] = useLocation();
   const [projects, setProjects] = useState<MetaProject[]>(() => readProjects());
   const project = projects.find((item) => item.id === params.projectId);
-  const [activeTab, setActiveTab] = useState<'files' | 'preview' | 'chat'>('chat');
+  const [activeTab, setActiveTab] = useState<'files' | 'preview' | 'chat'>(() => {
+    try {
+      const saved = localStorage.getItem('meta-default-project-tab');
+      return saved === 'files' || saved === 'preview' || saved === 'chat' ? saved : 'chat';
+    } catch {
+      return 'chat';
+    }
+  });
   const [activeFile, setActiveFile] = useState('');
   const [newFileName, setNewFileName] = useState('');
   const [showNewFile, setShowNewFile] = useState(false);
   const [message, setMessage] = useState('');
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
+  const [showProjectHints] = useState(() => {
+    try {
+      return localStorage.getItem('meta-project-hints') !== 'false';
+    } catch {
+      return true;
+    }
+  });
 
   useEffect(() => writeProjects(projects), [projects]);
 
@@ -1068,7 +1082,7 @@ function ProjectPage() {
                   <div className="editor-empty">
                     <FileCode2 aria-hidden="true" />
                     <h2>Code it yourself.</h2>
-                    <p>Create a file with the + button, then type directly in the editor.</p>
+                    {showProjectHints && <p>Create a file with the + button, then type directly in the editor.</p>}
                   </div>
                 )}
               </section>
@@ -1083,7 +1097,7 @@ function ProjectPage() {
                 <div className="editor-empty">
                   <Eye aria-hidden="true" />
                   <h2>Preview</h2>
-                  <p>Browser preview appears when this project has an index.html file. Other project types can still be edited and downloaded.</p>
+                  {showProjectHints && <p>Browser preview appears when this project has an index.html file. Other project types can still be edited and downloaded.</p>}
                 </div>
               )}
             </section>
@@ -1103,7 +1117,7 @@ function ProjectPage() {
                   <div className="project-chat-empty">
                     <Sparkles aria-hidden="true" />
                     <h2>Chat with Meta.</h2>
-                    <p>Ask for help when you want it. You can still code everything yourself in Files.</p>
+                    {showProjectHints && <p>Ask for help when you want it. You can still code everything yourself in Files.</p>}
                   </div>
                 )}
                 {sending && <div className="project-message assistant"><span>Meta</span><p>Working on your project…</p></div>}
@@ -1135,26 +1149,148 @@ function ProjectPage() {
 
 function SettingsPage() {
   const { theme, toggleTheme } = useTheme();
+  const [defaultTab, setDefaultTab] = useState<'files' | 'preview' | 'chat'>(() => {
+    try {
+      const saved = localStorage.getItem('meta-default-project-tab');
+      return saved === 'files' || saved === 'preview' || saved === 'chat' ? saved : 'chat';
+    } catch {
+      return 'chat';
+    }
+  });
+  const [editorSize, setEditorSize] = useState(() => {
+    try {
+      return localStorage.getItem('meta-editor-font-size') || 'medium';
+    } catch {
+      return 'medium';
+    }
+  });
+  const [reducedMotion, setReducedMotion] = useState(() => {
+    try {
+      return localStorage.getItem('meta-reduced-motion') === 'true';
+    } catch {
+      return false;
+    }
+  });
+  const [showProjectHints, setShowProjectHints] = useState(() => {
+    try {
+      return localStorage.getItem('meta-project-hints') !== 'false';
+    } catch {
+      return true;
+    }
+  });
+
+  useEffect(() => {
+    const sizes: Record<string, string> = { small: '11px', medium: '12px', large: '14px' };
+    document.documentElement.style.setProperty('--meta-editor-font-size', sizes[editorSize] || sizes.medium);
+    localStorage.setItem('meta-editor-font-size', editorSize);
+  }, [editorSize]);
+
+  useEffect(() => {
+    document.documentElement.dataset.reducedMotion = reducedMotion ? 'true' : 'false';
+    localStorage.setItem('meta-reduced-motion', String(reducedMotion));
+  }, [reducedMotion]);
+
+  useEffect(() => {
+    localStorage.setItem('meta-default-project-tab', defaultTab);
+  }, [defaultTab]);
+
+  useEffect(() => {
+    localStorage.setItem('meta-project-hints', String(showProjectHints));
+  }, [showProjectHints]);
+
   return (
     <AppShell>
-      <main className="workspace-page">
+      <main className="workspace-page settings-page">
         <section className="workspace-head">
           <div>
             <p className="section-kicker">Settings</p>
             <h1>Make Meta yours</h1>
-            <p>Control appearance, learning preferences, account options, and AI plan access.</p>
+            <p>Control appearance, project behavior, editor preferences, and account options.</p>
           </div>
         </section>
 
-        <section className="settings-list">
-          <div className="settings-row">
-            <div><strong>Appearance</strong><span>Switch between light and dark mode.</span></div>
-            <button type="button" className="button-secondary" onClick={toggleTheme}>{theme === 'dark' ? 'Use light' : 'Use dark'}</button>
+        <section className="settings-group">
+          <div className="settings-group-head">
+            <h2>Appearance</h2>
+            <p>Change how Meta looks and feels.</p>
           </div>
+
+          <div className="settings-row">
+            <div>
+              <strong>Dark mode</strong>
+              <span>Use the darker Meta theme.</span>
+            </div>
+            <label className="settings-switch">
+              <input type="checkbox" checked={theme === 'dark'} onChange={toggleTheme} aria-label="Dark mode" />
+              <span className="settings-switch-track"><span className="settings-switch-thumb" /></span>
+            </label>
+          </div>
+
+          <div className="settings-row">
+            <div>
+              <strong>Reduced motion</strong>
+              <span>Reduce animations and movement across the site.</span>
+            </div>
+            <label className="settings-switch">
+              <input type="checkbox" checked={reducedMotion} onChange={(event) => setReducedMotion(event.target.checked)} aria-label="Reduced motion" />
+              <span className="settings-switch-track"><span className="settings-switch-thumb" /></span>
+            </label>
+          </div>
+        </section>
+
+        <section className="settings-group">
+          <div className="settings-group-head">
+            <h2>Projects & editor</h2>
+            <p>Choose how your coding workspace opens and behaves.</p>
+          </div>
+
+          <div className="settings-row">
+            <div>
+              <strong>Open projects on</strong>
+              <span>Choose the first tab you see when opening a project.</span>
+            </div>
+            <select className="settings-select" value={defaultTab} onChange={(event) => setDefaultTab(event.target.value as 'files' | 'preview' | 'chat')}>
+              <option value="chat">Chat</option>
+              <option value="files">Files</option>
+              <option value="preview">Preview</option>
+            </select>
+          </div>
+
+          <div className="settings-row">
+            <div>
+              <strong>Editor text size</strong>
+              <span>Change the font size used while coding.</span>
+            </div>
+            <select className="settings-select" value={editorSize} onChange={(event) => setEditorSize(event.target.value)}>
+              <option value="small">Small</option>
+              <option value="medium">Medium</option>
+              <option value="large">Large</option>
+            </select>
+          </div>
+
+          <div className="settings-row">
+            <div>
+              <strong>Project helper hints</strong>
+              <span>Show small hints in empty project screens and editor areas.</span>
+            </div>
+            <label className="settings-switch">
+              <input type="checkbox" checked={showProjectHints} onChange={(event) => setShowProjectHints(event.target.checked)} aria-label="Project helper hints" />
+              <span className="settings-switch-track"><span className="settings-switch-thumb" /></span>
+            </label>
+          </div>
+        </section>
+
+        <section className="settings-group">
+          <div className="settings-group-head">
+            <h2>Account & billing</h2>
+            <p>Manage your plan, account, and privacy options.</p>
+          </div>
+
           <div className="settings-row">
             <div><strong>AI plan</strong><span>View AI credits, project limits, and upgrade options.</span></div>
             <Link href="/pricing" className="button-secondary">View plans</Link>
           </div>
+
           <div className="settings-row">
             <div>
               <strong>Account & privacy</strong>
