@@ -1,0 +1,17 @@
+{
+  "name": "Meta — Learn Coding by Building",
+  "short_name": "Meta",
+  "description": "Project-based coding lessons for games, websites, apps, Roblox, Minecraft Bedrock, Minecraft Java, and Java mods.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#2563eb",
+  "icons": [
+    {
+      "src": "/logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
