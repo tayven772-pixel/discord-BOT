@@ -18,6 +18,8 @@ import {
   Settings,
   CreditCard,
   Pause,
+  Plus,
+  Send,
   Play,
   Search,
   Sparkles,
@@ -111,6 +113,11 @@ const playTracks: PlayTrack[] = [
     projects: ['Custom item', 'Custom block', 'Simple combat mechanic'],
   },
 ];
+
+const META_STRIPE_TEST_LINKS: Record<string, string> = {
+  builder: 'https://buy.stripe.com/test_bJedR1cBEfOo2Yx3fzeEo00',
+  pro: 'https://buy.stripe.com/test_00w14f4580Tu8iRg2leEo01',
+};
 
 const aiPlans = [
   {
@@ -609,43 +616,139 @@ function PlayPage() {
 }
 
 function ProjectsPage() {
-  const projectTypes = [
-    ['Website', 'HTML, CSS, JavaScript'],
-    ['Game', 'Browser game project'],
-    ['App', 'App-style project'],
-    ['Roblox', 'Luau / Roblox Studio'],
-    ['MCBE', 'Bedrock add-on'],
-    ['MCJE', 'Java Edition datapack'],
-    ['MCJE Mod', 'Java mod project'],
+  const templates = [
+    ['Website', 'HTML, CSS, and JavaScript starter'],
+    ['Game', 'Browser game starter'],
+    ['App', 'App-style starter'],
+    ['Roblox', 'Luau / Roblox Studio starter'],
+    ['MCBE', 'Minecraft Bedrock add-on starter'],
+    ['MCJE', 'Java Edition datapack starter'],
+    ['MCJE Mod', 'Java mod starter'],
   ];
+
+  const [projects, setProjects] = useState<{ id: string; name: string; type: string }[]>(() => {
+    try {
+      const stored = localStorage.getItem('meta-projects-v1');
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [showCreator, setShowCreator] = useState(false);
+  const [projectName, setProjectName] = useState('');
+  const [projectType, setProjectType] = useState('Blank');
+  const [message, setMessage] = useState('');
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('meta-projects-v1', JSON.stringify(projects));
+    } catch {
+      // Keep projects in memory if local storage is unavailable.
+    }
+  }, [projects]);
+
+  const createProject = (name = projectName, type = projectType) => {
+    const cleanName = name.trim() || `Untitled ${type} project`;
+    setProjects((current) => [
+      ...current,
+      { id: `${Date.now()}-${Math.random().toString(16).slice(2)}`, name: cleanName, type },
+    ]);
+    setProjectName('');
+    setProjectType('Blank');
+    setShowCreator(false);
+  };
 
   return (
     <AppShell>
-      <main className="workspace-page">
-        <section className="workspace-head">
-          <div>
-            <p className="section-kicker">Projects</p>
-            <h1>Your build space</h1>
-            <p>Create a project first, then the Meta AI agent can use that project's files and goals as its working context.</p>
-          </div>
-          <Link href="/pricing" className="workspace-plan-link"><CreditCard aria-hidden="true" /> AI plans</Link>
+      <main className="projects-page">
+        <section className="projects-intro">
+          <p className="section-kicker">Projects</p>
+          <h1>What are you building?</h1>
+          <p>Ask Meta to help, or scroll down and create something yourself.</p>
         </section>
 
-        <section className="new-project-grid">
-          {projectTypes.map(([name, detail]) => (
-            <button className="new-project-card" type="button" key={name}>
-              <span className="new-project-icon"><Code2 aria-hidden="true" /></span>
-              <strong>{name}</strong>
-              <small>{detail}</small>
+        <section className="project-list-section">
+          <div className="project-list-head">
+            <div>
+              <p className="section-kicker">Your projects</p>
+              <h2>Pick up where you left off.</h2>
+            </div>
+            <button type="button" className="project-plus-button" onClick={() => setShowCreator(true)} aria-label="Create project" title="Create project">
+              <Plus aria-hidden="true" />
             </button>
-          ))}
+          </div>
+
+          {projects.length ? (
+            <div className="simple-project-grid">
+              {projects.map((project) => (
+                <button type="button" className="simple-project-card" key={project.id}>
+                  <span className="simple-project-icon"><FolderKanban aria-hidden="true" /></span>
+                  <strong>{project.name}</strong>
+                  <small>{project.type}</small>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="projects-empty-minimal">
+              <FolderKanban aria-hidden="true" />
+              <span>No projects yet. Tap + to make one without AI.</span>
+            </div>
+          )}
         </section>
 
-        <section className="workspace-empty">
-          <FolderKanban aria-hidden="true" />
-          <h2>No saved projects here yet</h2>
-          <p>When project persistence is connected, your projects will appear here and each one will keep its own AI conversation/context.</p>
-        </section>
+        <details className="template-drawer">
+          <summary>
+            <span>Templates</span>
+            <small>Start from one of the guided project types</small>
+          </summary>
+          <div className="template-grid">
+            {templates.map(([name, detail]) => (
+              <button type="button" className="template-card" key={name} onClick={() => createProject(`Untitled ${name}`, name)}>
+                <span className="new-project-icon"><Code2 aria-hidden="true" /></span>
+                <strong>{name}</strong>
+                <small>{detail}</small>
+              </button>
+            ))}
+          </div>
+        </details>
+
+        {showCreator && (
+          <div className="project-create-sheet" role="dialog" aria-modal="true" aria-label="Create project">
+            <div className="project-create-card">
+              <div className="project-create-title">
+                <div>
+                  <p className="section-kicker">New project</p>
+                  <h2>Create without AI</h2>
+                </div>
+                <button type="button" className="sheet-close" onClick={() => setShowCreator(false)} aria-label="Close">×</button>
+              </div>
+              <label>
+                <span>Name</span>
+                <input value={projectName} onChange={(event) => setProjectName(event.target.value)} placeholder="My project" autoFocus />
+              </label>
+              <label>
+                <span>Type</span>
+                <select value={projectType} onChange={(event) => setProjectType(event.target.value)}>
+                  <option>Blank</option>
+                  {templates.map(([name]) => <option key={name}>{name}</option>)}
+                </select>
+              </label>
+              <button type="button" className="button-primary" onClick={() => createProject()}>Create project</button>
+            </div>
+          </div>
+        )}
+
+        <form className="project-ai-composer" onSubmit={(event) => { event.preventDefault(); if (!message.trim()) return; setMessage(''); }}>
+          <input
+            value={message}
+            onChange={(event) => setMessage(event.target.value)}
+            placeholder="Ask Meta to start or change a project…"
+            aria-label="Message Meta AI"
+          />
+          <button type="submit" aria-label="Send message" disabled={!message.trim()}>
+            <Send aria-hidden="true" />
+          </button>
+        </form>
       </main>
     </AppShell>
   );
@@ -710,13 +813,22 @@ function PricingPage() {
                 <li><Check aria-hidden="true" /> Project-aware AI context</li>
                 <li><Check aria-hidden="true" /> Lessons and Lesson Play included</li>
               </ul>
-              <button type="button" className={plan.id === 'free' ? 'button-secondary' : 'button-primary'}>
-                {plan.id === 'free' ? 'Current/free plan' : 'Choose plan'}
-              </button>
+              {plan.id === 'free' ? (
+                <button type="button" className="button-secondary">Current/free plan</button>
+              ) : (
+                <a
+                  className="button-primary"
+                  href={META_STRIPE_TEST_LINKS[plan.id]}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Choose {plan.name}
+                </a>
+              )}
             </article>
           ))}
         </section>
-        <p className="pricing-note">AI credits are account-wide, but conversations stay attached to the project you are working in. Paid checkout will be connected to the billing provider before launch.</p>
+        <p className="pricing-note">AI credits are account-wide, while each project keeps its own AI context. Stripe checkout is connected in test mode right now; live charging will be enabled only after the live Stripe account is connected and verified.</p>
       </main>
     </AppShell>
   );
