@@ -876,6 +876,7 @@ function ProjectPage() {
   const [activeFile, setActiveFile] = useState('');
   const [newFileName, setNewFileName] = useState('');
   const [showNewFile, setShowNewFile] = useState(false);
+  const [fileCreateError, setFileCreateError] = useState('');
   const [message, setMessage] = useState('');
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
@@ -894,7 +895,9 @@ function ProjectPage() {
 
   useEffect(() => {
     if (!activeFile && fileEntries.length) setActiveFile(fileEntries[0][0]);
-    if (activeFile && !currentFiles[activeFile] && fileEntries.length) setActiveFile(fileEntries[0][0]);
+    if (activeFile && !Object.prototype.hasOwnProperty.call(currentFiles, activeFile) && fileEntries.length) {
+      setActiveFile(fileEntries[0][0]);
+    }
   }, [activeFile, fileEntries.length, project?.id]);
 
   if (!project) {
@@ -922,13 +925,35 @@ function ProjectPage() {
     updateFiles({ ...currentFiles, [activeFile]: content });
   };
 
-  const createFile = () => {
-    const path = newFileName.trim().replace(/^\/+/, '');
-    if (!path || currentFiles[path]) return;
-    updateFiles({ ...currentFiles, [path]: '' });
+  const createFile = (requestedPath = newFileName) => {
+    const path = requestedPath.trim().replace(/^\/+/, '').replace(/\\/g, '/');
+    setFileCreateError('');
+
+    if (!path) {
+      setFileCreateError('Enter a file name first.');
+      return;
+    }
+    if (path.endsWith('/')) {
+      setFileCreateError('Use a file name such as index.html or src/main.js.');
+      return;
+    }
+    if (Object.prototype.hasOwnProperty.call(currentFiles, path)) {
+      setFileCreateError('That file already exists.');
+      setActiveFile(path);
+      return;
+    }
+
+    const nextFiles = { ...currentFiles, [path]: '' };
+    const nextProjects = projects.map((item) =>
+      item.id === project.id ? { ...item, files: nextFiles, updatedAt: Date.now() } : item
+    );
+
+    setProjects(nextProjects);
+    writeProjects(nextProjects);
     setActiveFile(path);
     setNewFileName('');
     setShowNewFile(false);
+    setActiveTab('files');
   };
 
   const deleteActiveFile = () => {
@@ -1039,16 +1064,10 @@ function ProjectPage() {
               <aside className="file-sidebar">
                 <div className="file-sidebar-head">
                   <span>Files</span>
-                  <button type="button" className="icon-only-button" onClick={() => setShowNewFile(true)} aria-label="New file">
+                  <button type="button" className="icon-only-button" onClick={() => { setFileCreateError(''); setNewFileName(''); setShowNewFile(true); }} aria-label="New file">
                     <Plus aria-hidden="true" />
                   </button>
                 </div>
-                {showNewFile && (
-                  <div className="new-file-inline">
-                    <input value={newFileName} onChange={(event) => setNewFileName(event.target.value)} placeholder="src/file.js" onKeyDown={(event) => { if (event.key === 'Enter') createFile(); }} autoFocus />
-                    <button type="button" onClick={createFile}>Add</button>
-                  </div>
-                )}
                 <div className="file-list">
                   {fileEntries.map(([path]) => (
                     <button type="button" key={path} className={`file-list-item${activeFile === path ? ' active' : ''}`} onClick={() => setActiveFile(path)}>
@@ -1130,6 +1149,47 @@ function ProjectPage() {
             </section>
           )}
         </section>
+
+        {showNewFile && (
+          <div className="file-create-overlay" role="dialog" aria-modal="true" aria-label="Create a new file" onMouseDown={(event) => {
+            if (event.currentTarget === event.target) setShowNewFile(false);
+          }}>
+            <form className="file-create-dialog" onSubmit={(event) => { event.preventDefault(); createFile(); }}>
+              <div className="file-create-dialog-head">
+                <div>
+                  <span className="section-kicker">New file</span>
+                  <h2>Create a file</h2>
+                </div>
+                <button type="button" className="icon-only-button" onClick={() => setShowNewFile(false)} aria-label="Close">×</button>
+              </div>
+
+              <label className="file-create-label">
+                <span>File path</span>
+                <input
+                  value={newFileName}
+                  onChange={(event) => { setNewFileName(event.target.value); setFileCreateError(''); }}
+                  placeholder="index.html"
+                  autoFocus
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck={false}
+                />
+              </label>
+
+              <div className="file-quick-options" aria-label="Quick file choices">
+                <button type="button" onClick={() => createFile('index.html')}>index.html</button>
+                <button type="button" onClick={() => createFile('style.css')}>style.css</button>
+                <button type="button" onClick={() => createFile('script.js')}>script.js</button>
+              </div>
+
+              {fileCreateError && <p className="file-create-error" role="alert">{fileCreateError}</p>}
+
+              <button type="submit" className="button-primary file-create-submit" disabled={!newFileName.trim()}>
+                <Plus aria-hidden="true" /> Create file
+              </button>
+            </form>
+          </div>
+        )}
 
         <nav className="project-bottom-tabs" aria-label="Project tools">
           <button type="button" className={activeTab === 'files' ? 'active' : ''} onClick={() => setActiveTab('files')}>
