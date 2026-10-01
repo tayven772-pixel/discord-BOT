@@ -1350,7 +1350,7 @@ function SettingsPage() {
               <strong>Download Meta APK</strong>
               <span>Get the latest Android build. Android may ask you to allow installs from your browser.</span>
             </div>
-            <a className="button-primary" href="https://github.com/tayven772-pixel/discord-BOT/releases/download/meta-latest/Meta-latest.apk">
+            <a className="button-primary" href="/downloads/Meta-latest.apk" download="Meta.apk">
               <Download aria-hidden="true" /> Download APK
             </a>
           </div>
