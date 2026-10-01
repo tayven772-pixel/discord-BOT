@@ -1445,3 +1445,147 @@ html[data-reduced-motion='true'] *::after {
   background-size: 22px 22px !important;
   background-position: 0 0 !important;
 }
+
+
+/* Reliable file creation dialog */
+.file-create-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgb(15 23 42 / .42);
+  backdrop-filter: blur(7px);
+}
+
+.file-create-dialog {
+  width: min(460px, 100%);
+  display: grid;
+  gap: 16px;
+  padding: 20px;
+  border: 1px solid #d7d3c4;
+  border-radius: 16px;
+  background: hsl(var(--background));
+  box-shadow: 0 24px 70px rgb(15 23 42 / .28);
+}
+
+.file-create-dialog-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.file-create-dialog-head h2 {
+  margin: 4px 0 0;
+  font: 600 25px var(--app-font-serif);
+}
+
+.file-create-dialog-head .icon-only-button {
+  font-size: 25px;
+  line-height: 1;
+}
+
+.file-create-label {
+  display: grid;
+  gap: 7px;
+}
+
+.file-create-label > span {
+  color: #64748b;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.file-create-label input {
+  width: 100%;
+  height: 46px;
+  padding: 0 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 9px;
+  outline: none;
+  background: transparent;
+  color: inherit;
+  font: 12px var(--app-font-mono);
+}
+
+.file-create-label input:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgb(37 99 235 / .12);
+}
+
+.file-quick-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.file-quick-options button {
+  min-height: 32px;
+  padding: 0 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  background: transparent;
+  color: #475569;
+  font: 9px var(--app-font-mono);
+  cursor: pointer;
+}
+
+.file-quick-options button:hover {
+  border-color: #60a5fa;
+  color: #1d4ed8;
+  background: #eff6ff;
+}
+
+.file-create-error {
+  margin: -4px 0 0;
+  color: #b91c1c;
+  font-size: 10px;
+}
+
+.file-create-submit {
+  width: 100%;
+}
+
+:root[data-theme='dark'] .file-create-dialog {
+  border-color: #384352;
+  background: #101827;
+}
+
+:root[data-theme='dark'] .file-create-label input,
+:root[data-theme='dark'] .file-quick-options button {
+  border-color: #475569;
+}
+
+:root[data-theme='dark'] .file-quick-options button {
+  color: #cbd5e1;
+}
+
+:root[data-theme='dark'] .file-quick-options button:hover {
+  background: #172554;
+  color: #93c5fd;
+}
+
+/* File creation is modal now; never let legacy inline mobile positioning interfere */
+.new-file-inline {
+  position: static !important;
+}
+
+@media (max-width: 650px) {
+  .file-create-overlay {
+    place-items: end center;
+    padding: 10px;
+    padding-bottom: max(10px, env(safe-area-inset-bottom));
+  }
+
+  .file-create-dialog {
+    border-radius: 18px 18px 12px 12px;
+    padding: 18px;
+  }
+
+  .file-create-label input {
+    height: 48px;
+    font-size: 13px;
+  }
+}
