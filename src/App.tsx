@@ -1,5 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState, type CSSProperties, type FormEvent, type ReactNode } from 'react';
 import JSZip from 'jszip';
+import { Capacitor } from '@capacitor/core';
+import { SocialLogin } from '@capgo/capacitor-social-login';
 import { ClerkProvider, SignIn, SignUp, useAuth, useClerk, useUser } from '@clerk/react';
 import { shadcn } from '@clerk/themes';
 import { Link, Redirect, Route, Router as WouterRouter, Switch, useLocation, useParams } from 'wouter';
@@ -42,6 +44,8 @@ const basePath = import.meta.env.BASE_URL.replace(/\/$/, '');
 const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY ||
   'pk_test_YXBwYXJlbnQtc2NvcnBpb24tNjc3MC5jbGVyay5hY2NvdW50cy5kZXYk';
 const clerkProxyUrl = import.meta.env.VITE_CLERK_PROXY_URL;
+const GOOGLE_WEB_CLIENT_ID = '1081262614011-cv8mlkmbmf99e9pc66i1lrmj4k9m1lcm.apps.googleusercontent.com';
+const isNativeAndroid = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android';
 
 type PlayTrack = {
   id: string;
@@ -1990,6 +1994,57 @@ function SiteFactRotator() {
   );
 }
 
+function NativeGoogleButton() {
+  const clerk = useClerk();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (!isNativeAndroid) return;
+    void SocialLogin.initialize({
+      google: { webClientId: GOOGLE_WEB_CLIENT_ID, mode: 'online' },
+    });
+  }, []);
+
+  if (!isNativeAndroid) return null;
+
+  const onGoogle = async () => {
+    setBusy(true);
+    setError('');
+    try {
+      const result = await SocialLogin.login({
+        provider: 'google',
+        options: { scopes: ['email', 'profile'] },
+      });
+      if (result.provider !== 'google') throw new Error('Unexpected sign-in provider.');
+      const idToken = result.result.idToken;
+      if (!idToken) throw new Error('Google did not return an ID token.');
+      const signInOrUp = await clerk.authenticateWithGoogleOneTap({ token: idToken });
+      await clerk.handleGoogleOneTapCallback(signInOrUp, {
+        signInUrl: `${basePath}/sign-in`,
+        signUpUrl: `${basePath}/sign-up`,
+      });
+      window.location.assign(`${basePath}/user-portal`);
+    } catch (cause) {
+      const message = cause instanceof Error ? cause.message : String(cause);
+      if (!/cancel/i.test(message)) setError('Google sign-in could not be completed. Please try again.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="native-google-auth">
+      <button type="button" className="native-google-button" disabled={busy} onClick={() => void onGoogle()}>
+        <strong aria-hidden="true">G</strong>
+        {busy ? 'Opening Google…' : 'Continue with Google'}
+      </button>
+      {error && <p className="native-google-error" role="alert">{error}</p>}
+      <div className="native-auth-divider"><span>or</span></div>
+    </div>
+  );
+}
+
 function AuthPage({ mode }: { mode: 'sign-in' | 'sign-up' }) {
   const isSignIn = mode === 'sign-in';
 
@@ -2012,6 +2067,7 @@ function AuthPage({ mode }: { mode: 'sign-in' | 'sign-up' }) {
           <SiteFactRotator />
         </section>
         <section className="auth-form" aria-label={isSignIn ? 'Sign in to Meta' : 'Create your Meta account'}>
+          <NativeGoogleButton />
           {isSignIn ? (
             <SignIn
               routing="path"
