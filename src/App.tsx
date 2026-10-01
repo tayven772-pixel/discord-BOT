@@ -40,7 +40,7 @@ const LANGUAGE_KEY = 'meta-language-v1';
 const THEME_KEY = 'meta-theme-v1';
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, '');
 const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY ||
-  'pk_test_c21hc2hpbmctc2hlZXBkb2ctMTE5LmNsZXJrLmFjY291bnRzLmRldiQ';
+  'pk_test_YXBwYXJlbnQtc2NvcnBpb24tNjc3MC5jbGVyay5hY2NvdW50cy5kZXYk';
 const clerkProxyUrl = import.meta.env.VITE_CLERK_PROXY_URL;
 
 type PlayTrack = {
