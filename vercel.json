@@ -1,4 +1,12 @@
 {
   "buildCommand": "npm run build",
-  "outputDirectory": "dist"
+  "outputDirectory": "dist",
+  "rewrites": [
+    { "source": "/sign-in", "destination": "/index.html" },
+    { "source": "/sign-in/(.*)", "destination": "/index.html" },
+    { "source": "/sign-up", "destination": "/index.html" },
+    { "source": "/sign-up/(.*)", "destination": "/index.html" },
+    { "source": "/user-portal", "destination": "/index.html" },
+    { "source": "/learn/(.*)", "destination": "/index.html" }
+  ]
 }
