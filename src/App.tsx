@@ -114,6 +114,51 @@ const playTracks: PlayTrack[] = [
   },
 ];
 
+type MetaProjectMessage = {
+  role: 'user' | 'assistant';
+  content: string;
+};
+
+type MetaProject = {
+  id: string;
+  name: string;
+  type: string;
+  files?: Record<string, string>;
+  messages?: MetaProjectMessage[];
+  createdAt?: number;
+  updatedAt?: number;
+};
+
+const PROJECTS_KEY = 'meta-projects-v2';
+
+function readProjects(): MetaProject[] {
+  try {
+    const next = localStorage.getItem(PROJECTS_KEY);
+    if (next) return JSON.parse(next) as MetaProject[];
+    const legacy = localStorage.getItem('meta-projects-v1');
+    if (!legacy) return [];
+    const migrated = (JSON.parse(legacy) as Array<{ id: string; name: string; type: string }>).map((project) => ({
+      ...project,
+      files: {},
+      messages: [],
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    }));
+    localStorage.setItem(PROJECTS_KEY, JSON.stringify(migrated));
+    return migrated;
+  } catch {
+    return [];
+  }
+}
+
+function writeProjects(projects: MetaProject[]) {
+  try {
+    localStorage.setItem(PROJECTS_KEY, JSON.stringify(projects));
+  } catch {
+    // Keep projects in memory when storage is unavailable.
+  }
+}
+
 const META_STRIPE_TEST_LINKS: Record<string, string> = {
   builder: 'https://buy.stripe.com/test_bJedR1cBEfOo2Yx3fzeEo00',
   pro: 'https://buy.stripe.com/test_00w14f4580Tu8iRg2leEo01',
@@ -626,36 +671,80 @@ function ProjectsPage() {
     ['MCJE Mod', 'Java mod starter'],
   ];
 
-  const [projects, setProjects] = useState<{ id: string; name: string; type: string }[]>(() => {
-    try {
-      const stored = localStorage.getItem('meta-projects-v1');
-      return stored ? JSON.parse(stored) : [];
-    } catch {
-      return [];
-    }
-  });
+  const [, setLocation] = useLocation();
+  const [projects, setProjects] = useState<MetaProject[]>(() => readProjects());
   const [showCreator, setShowCreator] = useState(false);
   const [projectName, setProjectName] = useState('');
   const [projectType, setProjectType] = useState('Blank');
   const [message, setMessage] = useState('');
+  const [sending, setSending] = useState(false);
+  const [aiError, setAiError] = useState('');
 
-  useEffect(() => {
-    try {
-      localStorage.setItem('meta-projects-v1', JSON.stringify(projects));
-    } catch {
-      // Keep projects in memory if local storage is unavailable.
-    }
-  }, [projects]);
+  useEffect(() => writeProjects(projects), [projects]);
 
   const createProject = (name = projectName, type = projectType) => {
+    const id = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
     const cleanName = name.trim() || `Untitled ${type} project`;
-    setProjects((current) => [
-      ...current,
-      { id: `${Date.now()}-${Math.random().toString(16).slice(2)}`, name: cleanName, type },
-    ]);
+    const project: MetaProject = {
+      id,
+      name: cleanName,
+      type,
+      files: {},
+      messages: [],
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    };
+    setProjects((current) => [...current, project]);
     setProjectName('');
     setProjectType('Blank');
     setShowCreator(false);
+    setLocation(`/projects/${id}`);
+  };
+
+  const startWithAi = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const prompt = message.trim();
+    if (!prompt || sending) return;
+    setSending(true);
+    setAiError('');
+
+    try {
+      const response = await fetch('/api/coach', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          message: prompt,
+          track: 'Project Builder',
+          project: null,
+        }),
+      });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload?.error || 'Meta AI could not start the project.');
+
+      const id = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+      const project: MetaProject = {
+        id,
+        name: payload.project?.name || 'AI Project',
+        type: payload.project?.type || 'Blank',
+        files: payload.project?.files || {},
+        messages: [
+          { role: 'user', content: prompt },
+          { role: 'assistant', content: payload.reply || 'Project created.' },
+        ],
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      };
+
+      const next = [...projects, project];
+      setProjects(next);
+      writeProjects(next);
+      setMessage('');
+      setLocation(`/projects/${id}`);
+    } catch (error) {
+      setAiError(error instanceof Error ? error.message : 'Meta AI could not respond.');
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
@@ -664,7 +753,8 @@ function ProjectsPage() {
         <section className="projects-intro">
           <p className="section-kicker">Projects</p>
           <h1>What are you building?</h1>
-          <p>Ask Meta to help, or scroll down and create something yourself.</p>
+          <p>Ask Meta to create the starting project for you, or scroll down and create one yourself.</p>
+          {aiError && <p className="project-ai-error" role="alert">{aiError}</p>}
         </section>
 
         <section className="project-list-section">
@@ -681,7 +771,13 @@ function ProjectsPage() {
           {projects.length ? (
             <div className="simple-project-grid">
               {projects.map((project) => (
-                <button type="button" className="simple-project-card" key={project.id}>
+                <button
+                  type="button"
+                  className="simple-project-card"
+                  key={project.id}
+                  onClick={() => setLocation(`/projects/${project.id}`)}
+                  aria-label={`Open ${project.name}`}
+                >
                   <span className="simple-project-icon"><FolderKanban aria-hidden="true" /></span>
                   <strong>{project.name}</strong>
                   <small>{project.type}</small>
@@ -691,7 +787,7 @@ function ProjectsPage() {
           ) : (
             <div className="projects-empty-minimal">
               <FolderKanban aria-hidden="true" />
-              <span>No projects yet. Tap + to make one without AI.</span>
+              <span>No projects yet. Ask Meta below or tap + to make one without AI.</span>
             </div>
           )}
         </section>
@@ -738,14 +834,154 @@ function ProjectsPage() {
           </div>
         )}
 
-        <form className="project-ai-composer" onSubmit={(event) => { event.preventDefault(); if (!message.trim()) return; setMessage(''); }}>
+        <form className="project-ai-composer" onSubmit={startWithAi}>
           <input
             value={message}
             onChange={(event) => setMessage(event.target.value)}
-            placeholder="Ask Meta to start or change a project…"
+            placeholder={sending ? 'Meta is creating your project…' : 'Ask Meta to create a project…'}
             aria-label="Message Meta AI"
+            disabled={sending}
           />
-          <button type="submit" aria-label="Send message" disabled={!message.trim()}>
+          <button type="submit" aria-label="Send message" disabled={!message.trim() || sending}>
+            <Send aria-hidden="true" />
+          </button>
+        </form>
+      </main>
+    </AppShell>
+  );
+}
+
+function ProjectPage() {
+  const params = useParams<{ projectId: string }>();
+  const [, setLocation] = useLocation();
+  const [projects, setProjects] = useState<MetaProject[]>(() => readProjects());
+  const project = projects.find((item) => item.id === params.projectId);
+  const [message, setMessage] = useState('');
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState('');
+
+  useEffect(() => writeProjects(projects), [projects]);
+
+  if (!project) {
+    return (
+      <AppShell>
+        <main className="project-detail-page">
+          <Link href="/projects" className="back-link"><ArrowLeft aria-hidden="true" /> Back to projects</Link>
+          <div className="projects-empty-minimal">
+            <FolderKanban aria-hidden="true" />
+            <span>This project could not be found.</span>
+          </div>
+        </main>
+      </AppShell>
+    );
+  }
+
+  const sendToAi = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const prompt = message.trim();
+    if (!prompt || sending) return;
+    setSending(true);
+    setError('');
+
+    const withUserMessage = projects.map((item) =>
+      item.id === project.id
+        ? {
+            ...item,
+            messages: [...(item.messages || []), { role: 'user' as const, content: prompt }],
+            updatedAt: Date.now(),
+          }
+        : item
+    );
+    setProjects(withUserMessage);
+    setMessage('');
+
+    try {
+      const response = await fetch('/api/coach', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          message: prompt,
+          track: 'Project Builder',
+          project,
+        }),
+      });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload?.error || 'Meta AI could not respond.');
+
+      setProjects((current) => current.map((item) =>
+        item.id === project.id
+          ? {
+              ...item,
+              name: payload.project?.name || item.name,
+              type: payload.project?.type || item.type,
+              files: payload.project?.files || item.files || {},
+              messages: [...(item.messages || []), { role: 'assistant' as const, content: payload.reply || 'Done.' }],
+              updatedAt: Date.now(),
+            }
+          : item
+      ));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Meta AI could not respond.');
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const fileEntries = Object.entries(project.files || {});
+
+  return (
+    <AppShell>
+      <main className="project-detail-page">
+        <div className="project-detail-head">
+          <button type="button" className="back-link project-back-button" onClick={() => setLocation('/projects')}>
+            <ArrowLeft aria-hidden="true" /> Back to projects
+          </button>
+          <div>
+            <p className="section-kicker">{project.type}</p>
+            <h1>{project.name}</h1>
+          </div>
+        </div>
+
+        <section className="project-conversation" aria-live="polite">
+          {(project.messages || []).length ? (
+            (project.messages || []).map((entry, index) => (
+              <div className={`project-message ${entry.role}`} key={`${entry.role}-${index}`}>
+                <span>{entry.role === 'user' ? 'You' : 'Meta'}</span>
+                <p>{entry.content}</p>
+              </div>
+            ))
+          ) : (
+            <div className="project-chat-empty">
+              <Sparkles aria-hidden="true" />
+              <h2>Project ready.</h2>
+              <p>Tell Meta what you want to build or change. It can update the project's starter files as you work.</p>
+            </div>
+          )}
+          {sending && <div className="project-message assistant"><span>Meta</span><p>Working on your project…</p></div>}
+          {error && <p className="project-ai-error" role="alert">{error}</p>}
+        </section>
+
+        <details className="project-files-drawer" open={fileEntries.length > 0}>
+          <summary>Project files <span>{fileEntries.length}</span></summary>
+          <div className="project-files-list">
+            {fileEntries.length ? fileEntries.map(([path, content]) => (
+              <details className="project-file" key={path}>
+                <summary>{path}</summary>
+                <pre>{content}</pre>
+              </details>
+            )) : <p>No files yet. Ask Meta to build the first version.</p>}
+          </div>
+        </details>
+
+        <form className="project-ai-composer project-detail-composer" onSubmit={sendToAi}>
+          <input
+            value={message}
+            onChange={(event) => setMessage(event.target.value)}
+            placeholder={sending ? 'Meta is working…' : 'Ask Meta to change this project…'}
+            aria-label="Message Meta AI about this project"
+            disabled={sending}
+          />
+          <button type="submit" aria-label="Send message" disabled={!message.trim() || sending}>
             <Send aria-hidden="true" />
           </button>
         </form>
@@ -1468,6 +1704,7 @@ function ProtectedRoutes() {
       <Route path="/play" component={PlayPage} />
       <Route path="/play/:track" component={PlayPage} />
       <Route path="/account" component={AccountSettingsPage} />
+      <Route path="/projects/:projectId" component={ProjectPage} />
       <Route path="/projects" component={ProjectsPage} />
       <Route path="/settings" component={SettingsPage} />
       <Route path="/pricing" component={PricingPage} />
