@@ -1710,17 +1710,3 @@ html[data-reduced-motion='true'] *::after {
   }
 }
 
-
-/* Native Android authentication */
-.native-google-auth { width: 100%; margin-bottom: 0.25rem; }
-.native-google-button {
-  width: 100%; min-height: 48px; border: 1px solid var(--line, #d9d4c5);
-  border-radius: 12px; background: var(--surface, #fffdf7); color: inherit;
-  display: flex; align-items: center; justify-content: center; gap: 12px;
-  font: inherit; font-weight: 600; cursor: pointer;
-}
-.native-google-button:disabled { opacity: .65; cursor: wait; }
-.native-google-g { font-weight: 800; font-size: 18px; }
-.native-google-error { margin: 8px 0 0; font-size: 13px; color: #a83d31; }
-.native-auth-divider { display: flex; align-items: center; gap: 12px; margin: 18px 0 10px; color: #777; font-size: 12px; }
-.native-auth-divider::before, .native-auth-divider::after { content: ""; height: 1px; flex: 1; background: currentColor; opacity: .25; }
