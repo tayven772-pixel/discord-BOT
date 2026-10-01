@@ -1,6 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState, type CSSProperties, type FormEvent, type ReactNode } from 'react';
 import JSZip from 'jszip';
-import { Capacitor, registerPlugin } from '@capacitor/core';
 import { ClerkProvider, SignIn, SignUp, useAuth, useClerk, useUser } from '@clerk/react';
 import { shadcn } from '@clerk/themes';
 import { Link, Redirect, Route, Router as WouterRouter, Switch, useLocation, useParams } from 'wouter';
@@ -43,12 +42,6 @@ const basePath = import.meta.env.BASE_URL.replace(/\/$/, '');
 const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY ||
   'pk_test_YXBwYXJlbnQtc2NvcnBpb24tNjc3MC5jbGVyay5hY2NvdW50cy5kZXYk';
 const clerkProxyUrl = import.meta.env.VITE_CLERK_PROXY_URL;
-const isNativeAndroid = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android';
-
-interface NativeGoogleAuthPlugin {
-  signIn(): Promise<{ idToken: string }>;
-}
-const NativeGoogleAuth = registerPlugin<NativeGoogleAuthPlugin>('NativeGoogleAuth');
 
 type PlayTrack = {
   id: string;
@@ -1997,44 +1990,6 @@ function SiteFactRotator() {
   );
 }
 
-function NativeGoogleButton() {
-  const clerk = useClerk();
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState('');
-
-  if (!isNativeAndroid) return null;
-
-  const signIn = async () => {
-    setBusy(true);
-    setError('');
-    try {
-      const { idToken } = await NativeGoogleAuth.signIn();
-      const result = await clerk.authenticateWithGoogleOneTap({ token: idToken });
-      await clerk.handleGoogleOneTapCallback(
-        result,
-        { signInUrl: `${basePath}/sign-in`, signUpUrl: `${basePath}/sign-up` },
-        async () => { window.location.href = `${basePath}/user-portal`; },
-      );
-    } catch (cause) {
-      const message = cause instanceof Error ? cause.message : String(cause);
-      if (!/cancel/i.test(message)) setError('Google sign-in could not be completed. Please try again.');
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  return (
-    <div className="native-google-auth" data-testid="native-google-auth">
-      <button type="button" className="native-google-button" onClick={() => void signIn()} disabled={busy}>
-        <span className="native-google-g" aria-hidden="true">G</span>
-        {busy ? 'Opening Google…' : 'Continue with Google'}
-      </button>
-      {error && <p className="native-google-error" role="alert">{error}</p>}
-      <div className="native-auth-divider"><span>or</span></div>
-    </div>
-  );
-}
-
 function AuthPage({ mode }: { mode: 'sign-in' | 'sign-up' }) {
   const isSignIn = mode === 'sign-in';
 
@@ -2057,7 +2012,6 @@ function AuthPage({ mode }: { mode: 'sign-in' | 'sign-up' }) {
           <SiteFactRotator />
         </section>
         <section className="auth-form" aria-label={isSignIn ? 'Sign in to Meta' : 'Create your Meta account'}>
-          <NativeGoogleButton />
           {isSignIn ? (
             <SignIn
               routing="path"
