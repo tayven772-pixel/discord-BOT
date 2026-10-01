@@ -43,13 +43,15 @@ jobs:
       - name: Build APK
         working-directory: android
         run: ./gradlew assembleDebug
-      - name: Publish latest APK
-        env:
-          GH_TOKEN: ${{ github.token }}
+      - name: Publish APK to website
         run: |
-          cp android/app/build/outputs/apk/debug/app-debug.apk Meta-latest.apk
-          gh release view meta-latest >/dev/null 2>&1 || gh release create meta-latest --title "Meta Android APK" --notes "Latest installable Meta Android build."
-          gh release upload meta-latest Meta-latest.apk --clobber
+          mkdir -p public/downloads
+          cp android/app/build/outputs/apk/debug/app-debug.apk public/downloads/Meta-latest.apk
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f public/downloads/Meta-latest.apk
+          git commit -m "Update downloadable Meta APK [skip ci]" || exit 0
+          git push
       - uses: actions/upload-artifact@v4
         with:
           name: Meta-Android-APK
