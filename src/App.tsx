@@ -286,6 +286,7 @@ function Header({ progressCount }: { progressCount: number }) {
             <span className="account-name" title={user.primaryEmailAddress?.emailAddress ?? undefined}>
               {user.firstName || user.username || 'Learner'}
             </span>
+            <Link href="/account" className="account-signin" data-testid="link-account-settings">Account</Link>
             <button
               type="button"
               className="account-signout"
@@ -454,7 +455,10 @@ function HomePage() {
           </div>
         </section>
         <ProgressionSection progress={progress} onSkillLevelChange={setSkillLevel} />
-        <footer className="footer"><span>META — LEARN THE IDEA, THEN THE CODE.</span><span>A growing library for your first steps.</span></footer>
+        <footer className="footer">
+          <span>META — LEARN THE IDEA, THEN THE CODE.</span>
+          <span className="footer-links"><Link href="/privacy">Privacy</Link><Link href="/delete-account">Delete account</Link><a href="mailto:metasupport43@gmail.com">Support</a></span>
+        </footer>
       </main>
     </AppShell>
   );
@@ -561,6 +565,94 @@ function PlayPage() {
   );
 }
 
+function AccountSettingsPage() {
+  const { user } = useUser();
+  const { signOut } = useClerk();
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
+
+  const deleteAccount = async () => {
+    if (!user || deleting) return;
+    setDeleting(true);
+    setDeleteError('');
+    try {
+      await user.delete();
+      await signOut({ redirectUrl: basePath || '/' });
+    } catch {
+      setDeleteError('We could not delete your account right now. Please try again or use the account deletion page for support.');
+      setDeleting(false);
+    }
+  };
+
+  return (
+    <AppShell>
+      <main className="account-page">
+        <section className="account-card">
+          <p className="section-kicker">Account & privacy</p>
+          <h1>Manage your Meta account</h1>
+          <p className="account-email">{user?.primaryEmailAddress?.emailAddress ?? 'Signed-in learner'}</p>
+
+          <div className="account-setting-block">
+            <h2>Your data</h2>
+            <p>Meta stores the account information needed for sign-in and your learning progress so you can continue lessons across sessions.</p>
+            <div className="account-setting-links">
+              <Link href="/privacy" className="button-secondary">Read privacy policy</Link>
+              <Link href="/delete-account" className="button-secondary">Account deletion help</Link>
+            </div>
+          </div>
+
+          <div className="danger-zone">
+            <h2>Delete account</h2>
+            <p>Deleting your account permanently removes the account from Meta's authentication system. This cannot be undone.</p>
+            {!confirmingDelete ? (
+              <button type="button" className="danger-button" onClick={() => setConfirmingDelete(true)}>
+                Delete my account
+              </button>
+            ) : (
+              <div className="delete-confirm">
+                <strong>Delete this account permanently?</strong>
+                <span>You will lose access to this account and its saved learning identity.</span>
+                <div>
+                  <button type="button" className="danger-button" disabled={deleting} onClick={() => void deleteAccount()}>
+                    {deleting ? 'Deleting…' : 'Yes, delete permanently'}
+                  </button>
+                  <button type="button" className="button-secondary" disabled={deleting} onClick={() => setConfirmingDelete(false)}>
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+            {deleteError && <p className="delete-error" role="alert">{deleteError}</p>}
+          </div>
+        </section>
+      </main>
+    </AppShell>
+  );
+}
+
+function DeleteAccountPage() {
+  return (
+    <main className="policy-page">
+      <Link href="/" className="brand policy-brand">
+        <span className="brand-mark"><Code2 aria-hidden="true" /></span>
+        <span>meta</span>
+      </Link>
+      <article className="policy-card">
+        <p className="section-kicker">Account deletion</p>
+        <h1>Delete your Meta account</h1>
+        <p>Meta users can start account deletion from inside the app under <strong>Account → Delete account</strong>.</p>
+        <h2>If you cannot access the app</h2>
+        <p>You can request deletion by emailing <a className="policy-link" href="mailto:metasupport43@gmail.com?subject=Meta%20account%20deletion%20request">metasupport43@gmail.com</a> with the subject “Meta account deletion request”. Include the email address used for your Meta account so the request can be matched to the correct account.</p>
+        <h2>What gets deleted</h2>
+        <p>The request covers the Meta account and associated learning/account data controlled by Meta. If any information must be kept for a legitimate security, fraud-prevention, or legal reason, that retention should be disclosed in the privacy policy.</p>
+        <h2>Need help?</h2>
+        <p><a className="policy-link" href="mailto:metasupport43@gmail.com?subject=Meta%20support">Contact Meta Support</a> for account or privacy questions.</p>
+      </article>
+    </main>
+  );
+}
+
 function PrivacyPage() {
   return (
     <main className="policy-page">
@@ -578,8 +670,10 @@ function PrivacyPage() {
         <p>The core learning experience does not require contacts, call logs, SMS, precise location, microphone, camera, or background location.</p>
         <h2>Children and families</h2>
         <p>Store listing age targeting and any child-directed features must be configured accurately in Google Play Console. Features and data practices should match the audience selected there.</p>
-        <h2>Account and data requests</h2>
-        <p>Users should be able to contact the app publisher for privacy questions, account help, and deletion requests using the support contact published in the store listing.</p>
+        <h2>Account deletion and data requests</h2>
+        <p>Signed-in users can delete their account from the Account page. Users who cannot access the app can use the public <Link className="policy-link" href="/delete-account">account deletion page</Link> or contact <a className="policy-link" href="mailto:metasupport43@gmail.com">metasupport43@gmail.com</a>. Account deletion is intended to remove the account and associated Meta-controlled learning/account data, subject only to any retention that is legally or security-required.</p>
+        <h2>Support contact</h2>
+        <p>Privacy, account, and app-support questions can be sent to <a className="policy-link" href="mailto:metasupport43@gmail.com">metasupport43@gmail.com</a>.</p>
       </article>
     </main>
   );
@@ -1104,6 +1198,7 @@ function ProtectedRoutes() {
       <Route path="/learn/:lessonId" component={LessonPage} />
       <Route path="/play" component={PlayPage} />
       <Route path="/play/:track" component={PlayPage} />
+      <Route path="/account" component={AccountSettingsPage} />
       <Route component={NotFound} />
     </Switch>
   );
@@ -1138,6 +1233,7 @@ function ClerkProviderWithRoutes() {
         <Route path="/sign-in/*?" component={() => <AuthPage mode="sign-in" />} />
         <Route path="/sign-up/*?" component={() => <AuthPage mode="sign-up" />} />
         <Route path="/privacy" component={PrivacyPage} />
+        <Route path="/delete-account" component={DeleteAccountPage} />
         <Route component={ProtectedRoutes} />
       </Switch>
     </ClerkProvider>
