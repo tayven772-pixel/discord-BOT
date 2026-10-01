@@ -1896,12 +1896,12 @@ function clerkAppearanceFor(theme: ThemeMode) {
       logoBox: 'mb-3',
       logoImage: 'h-8 w-8',
       socialButtonsBlockButton: dark
-        ? '!bg-[#252d39] !border-[#434e5e] hover:!bg-[#303a49]'
-        : '!bg-[#fffdf7] !border-[#d9d4c5] hover:!bg-[#f7f3e8]',
-      formButtonPrimary: '!bg-[#c95238] hover:!bg-[#ae432e] !text-white',
+        ? '!h-12 !rounded-xl !bg-[#252d39] !border !border-[#434e5e] hover:!bg-[#303a49]'
+        : '!h-12 !rounded-xl !bg-[#fffdf7] !border !border-[#d9d4c5] hover:!bg-[#f7f3e8]',
+      formButtonPrimary: '!h-12 !rounded-xl !bg-[#c95238] hover:!bg-[#ae432e] !text-white !font-semibold',
       formFieldInput: dark
-        ? '!bg-[#252d39] !border-[#434e5e] !text-[#f1eee7]'
-        : '!bg-[#f7f3e8] !border-[#d9d4c5] !text-[#263247]',
+        ? '!h-12 !rounded-xl !bg-[#252d39] !border-[#434e5e] !text-[#f1eee7]'
+        : '!h-12 !rounded-xl !bg-[#f7f3e8] !border-[#d9d4c5] !text-[#263247]',
       footerAction: 'pt-4',
       dividerLine: dark ? '!bg-[#434e5e]' : '!bg-[#d9d4c5]',
       alert: dark ? '!bg-[#382525] !border-[#75463b]' : '!bg-[#fff4ef] !border-[#e9b8aa]',
