@@ -1,0 +1,57 @@
+name: Build Meta Android APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'capacitor.config.ts'
+      - '.github/workflows/build-android.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: meta-android
+  cancel-in-progress: true
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Install dependencies
+        run: npm ci
+      - name: Build web app
+        run: npm run build
+      - name: Create Android project
+        run: |
+          rm -rf android
+          npx cap add android
+          npx cap sync android
+      - name: Build APK
+        working-directory: android
+        run: ./gradlew assembleDebug
+      - name: Publish latest APK
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp android/app/build/outputs/apk/debug/app-debug.apk Meta-latest.apk
+          gh release view meta-latest >/dev/null 2>&1 || gh release create meta-latest --title "Meta Android APK" --notes "Latest installable Meta Android build."
+          gh release upload meta-latest Meta-latest.apk --clobber
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Meta-Android-APK
+          path: android/app/build/outputs/apk/debug/app-debug.apk
