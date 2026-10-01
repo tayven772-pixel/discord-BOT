@@ -629,3 +629,41 @@ body { padding-top: env(safe-area-inset-top); padding-right: env(safe-area-inset
   .play-track-sidebar { position: static; }
   .play-card { grid-template-columns: 42px minmax(0, 1fr) 18px; padding: 14px; }
 }
+
+
+/* Google Play account controls */
+.account-page { width: min(820px, calc(100% - 36px)); margin: 0 auto; padding: 42px 0 80px; }
+.account-card { padding: clamp(22px, 5vw, 42px); border: 1px solid #d7d3c4; border-radius: 14px; background: #f9f6ed; }
+.account-card h1 { margin: 7px 0 8px; font: 600 clamp(34px, 6vw, 52px)/1.05 var(--app-font-serif); letter-spacing: -.04em; }
+.account-email { margin: 0 0 28px; color: #64748b; font-size: 12px; }
+.account-setting-block, .danger-zone { padding-top: 22px; border-top: 1px solid #d7d3c4; }
+.account-setting-block h2, .danger-zone h2 { margin: 0 0 7px; font: 600 21px var(--app-font-serif); }
+.account-setting-block p, .danger-zone p { margin: 0; color: #64748b; font-size: 12px; line-height: 1.7; }
+.account-setting-links { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+.danger-zone { margin-top: 26px; }
+.danger-button { margin-top: 14px; min-height: 40px; padding: 0 14px; border: 1px solid #b91c1c; border-radius: 7px; background: #b91c1c; color: white; font-size: 11px; font-weight: 700; cursor: pointer; }
+.danger-button:hover { background: #991b1b; }
+.danger-button:disabled { opacity: .6; cursor: wait; }
+.delete-confirm { display: grid; gap: 8px; margin-top: 14px; padding: 14px; border: 1px solid #fecaca; border-radius: 9px; background: #fef2f2; }
+.delete-confirm strong { color: #7f1d1d; font-size: 12px; }
+.delete-confirm span { color: #7f1d1d; font-size: 11px; line-height: 1.6; }
+.delete-confirm > div { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.delete-confirm .danger-button { margin-top: 0; }
+.delete-error { margin-top: 12px !important; color: #b91c1c !important; }
+.policy-link { color: #1d4ed8; font-weight: 700; text-decoration: underline; text-underline-offset: 2px; }
+.footer-links { display: flex; flex-wrap: wrap; gap: 14px; }
+.footer-links a:hover { color: #2563eb; }
+:root[data-theme='dark'] .account-card { border-color: #384352; background: #1d2530; color: #f1eee7; }
+:root[data-theme='dark'] .account-email,
+:root[data-theme='dark'] .account-setting-block p,
+:root[data-theme='dark'] .danger-zone p { color: #b5bcc6; }
+:root[data-theme='dark'] .account-setting-block,
+:root[data-theme='dark'] .danger-zone { border-color: #384352; }
+:root[data-theme='dark'] .delete-confirm { border-color: #7f1d1d; background: #2b1518; }
+:root[data-theme='dark'] .delete-confirm strong,
+:root[data-theme='dark'] .delete-confirm span { color: #fecaca; }
+@media (max-width: 650px) {
+  .account-page { padding-top: 24px; }
+  .account-setting-links { flex-direction: column; align-items: stretch; }
+  .footer-links { gap: 10px; }
+}
