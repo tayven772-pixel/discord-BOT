@@ -35,10 +35,9 @@ jobs:
         run: npm install
       - name: Build web app
         run: npm run build
-      - name: Create Android project
+      - name: Sync Android project
         run: |
-          rm -rf android
-          npx cap add android
+          if [ ! -d android ]; then npx cap add android; fi
           npx cap sync android
       - name: Restore release signing key
         env:
