@@ -396,11 +396,11 @@ function Header({ progressCount }: { progressCount: number }) {
   );
 }
 
-function AppShell({ children, showBottomNav = true }: { children: ReactNode; showBottomNav?: boolean }) {
+function AppShell({ children, showBottomNav = true, showHeader = true }: { children: ReactNode; showBottomNav?: boolean; showHeader?: boolean }) {
   const { progress } = useProgress();
   return (
     <div className="app-shell">
-      <Header progressCount={progress.completedLessonIds.length} />
+      {showHeader && <Header progressCount={progress.completedLessonIds.length} />}
       {children}
       {showBottomNav && (
         <nav className="bottom-workspace-nav" aria-label="Main navigation">
@@ -865,7 +865,7 @@ function ProjectPage() {
   const [, setLocation] = useLocation();
   const [projects, setProjects] = useState<MetaProject[]>(() => readProjects());
   const project = projects.find((item) => item.id === params.projectId);
-  const [activeTab, setActiveTab] = useState<'files' | 'preview' | 'chat'>('files');
+  const [activeTab, setActiveTab] = useState<'files' | 'preview' | 'chat'>('chat');
   const [activeFile, setActiveFile] = useState('');
   const [newFileName, setNewFileName] = useState('');
   const [showNewFile, setShowNewFile] = useState(false);
@@ -1003,7 +1003,7 @@ function ProjectPage() {
     : '';
 
   return (
-    <AppShell showBottomNav={false}>
+    <AppShell showBottomNav={false} showHeader={false}>
       <main className="project-editor-page">
         <header className="project-editor-head">
           <button type="button" className="project-back-button icon-only-button" onClick={() => setLocation('/projects')} aria-label="Back to projects">
@@ -1013,8 +1013,9 @@ function ProjectPage() {
             <strong>{project.name}</strong>
             <span>{project.type}</span>
           </div>
-          <button type="button" className="project-download-button" onClick={() => void downloadProject()} disabled={!fileEntries.length}>
-            <Download aria-hidden="true" /> Download
+          <button type="button" className="project-download-button" onClick={() => void downloadProject()} disabled={!fileEntries.length} aria-label="Download project as ZIP">
+            <Download aria-hidden="true" />
+            <span>Download</span>
           </button>
         </header>
 
