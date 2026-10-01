@@ -1,0 +1,97 @@
+name: Build Android Release
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'capacitor.config.ts'
+      - 'vite.config.ts'
+      - '.github/workflows/android-release.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android 16 SDK
+        run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
+
+      - name: Install web dependencies
+        run: npm install
+
+      - name: Build web app
+        run: npm run build
+
+      - name: Generate Android project
+        run: |
+          rm -rf android
+          npx cap add android
+          npx cap sync android
+
+      - name: Enforce Google Play target API 36
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('android/variables.gradle')
+          s = p.read_text()
+          import re
+          s = re.sub(r'compileSdkVersion\s*=\s*\d+', 'compileSdkVersion = 36', s)
+          s = re.sub(r'targetSdkVersion\s*=\s*\d+', 'targetSdkVersion = 36', s)
+          p.write_text(s)
+          print(p.read_text())
+          PY
+
+      - name: Build release AAB and test APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew bundleRelease assembleDebug --stacktrace
+
+      - name: Collect artifacts
+        run: |
+          mkdir -p android-output
+          cp android/app/build/outputs/bundle/release/app-release.aab android-output/Meta-release-unsigned.aab
+          cp android/app/build/outputs/apk/debug/app-debug.apk android-output/Meta-debug.apk
+          cat > android-output/README.txt <<'EOF'
+          Meta Android build
+
+          Meta-debug.apk:
+          Install on Android devices for testing.
+
+          Meta-release-unsigned.aab:
+          Google Play release bundle generated against Android API 36.
+          Before production upload, it must be signed with the publisher's persistent upload key.
+          Keep the upload key safe because future updates must use the same signing identity.
+          EOF
+
+      - name: Upload Android bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: Meta-Android-Build
+          path: android-output/
+          retention-days: 14
