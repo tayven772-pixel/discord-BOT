@@ -1,11 +1,15 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.meta.codeatlas',
+  appId: 'app.meta.learn',
   appName: 'Meta',
   webDir: 'dist',
   server: {
-    androidScheme: 'https',
+    url: 'https://discord-bot-blond-beta.vercel.app',
+    cleartext: false,
+  },
+  android: {
+    allowMixedContent: false,
   },
 };
 
