@@ -1636,3 +1636,76 @@ html[data-reduced-motion='true'] *::after {
     border-radius: 10px;
   }
 }
+
+
+/* Desktop workspace treatment — intentionally roomier than the mobile app */
+@media (min-width: 1000px) {
+  .topbar {
+    height: 82px;
+    padding-inline: clamp(36px, 5vw, 88px);
+  }
+  .brand { font-size: 17px; }
+  .brand-mark { width: 38px; height: 38px; border-radius: 12px; }
+  .top-links { gap: 32px; font-size: 13px; }
+
+  .home-main,
+  .lesson-main {
+    width: min(1320px, calc(100% - 96px));
+  }
+  .hero {
+    min-height: 510px;
+    grid-template-columns: minmax(0, 1.12fr) minmax(430px, .88fr);
+    gap: 72px;
+    padding-block: 78px;
+  }
+  .hero h1 { max-width: 720px; font-size: clamp(64px, 6vw, 88px); }
+  .hero-copy { max-width: 560px; font-size: 17px; }
+  .atlas-card { width: min(100%, 500px); padding: 25px; }
+
+  .section { padding-block: 68px 88px; }
+  .section-heading h2 { font-size: 38px; }
+  .language-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+  .language-card { min-height: 176px; padding: 21px; border-radius: 12px; }
+
+  .pathway {
+    grid-template-columns: .78fr 1.22fr;
+    gap: 72px;
+    padding: 40px 44px;
+    border-radius: 16px;
+  }
+
+  .lesson-layout {
+    grid-template-columns: minmax(0, 1fr) 330px;
+    gap: 72px;
+  }
+
+  .auth-page { padding-inline: clamp(44px, 7vw, 110px); }
+  .auth-layout {
+    width: min(1260px, 100%);
+    grid-template-columns: minmax(0, 1fr) minmax(460px, .8fr);
+    gap: clamp(80px, 9vw, 150px);
+  }
+  .auth-copy h1 { font-size: clamp(64px, 6vw, 86px); }
+  .auth-copy > p:not(.section-kicker) { max-width: 500px; font-size: 17px; }
+
+  .project-editor-page {
+    min-height: 100vh;
+  }
+  .project-editor-body {
+    min-height: calc(100vh - 72px);
+  }
+  .file-sidebar {
+    min-width: 250px;
+  }
+  .manual-code-editor {
+    margin: 16px;
+    width: calc(100% - 32px);
+    height: calc(100% - 32px);
+    padding: 20px;
+  }
+
+  .settings-page {
+    max-width: 1040px;
+    margin-inline: auto;
+  }
+}
