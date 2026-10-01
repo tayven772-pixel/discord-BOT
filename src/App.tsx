@@ -195,9 +195,6 @@ const aiPlans = [
 ] as const;
 
 
-if (!clerkPubKey) {
-  throw new Error('Missing VITE_CLERK_PUBLISHABLE_KEY in the environment');
-}
 
 type ThemeMode = 'light' | 'dark';
 type ThemeContextValue = { theme: ThemeMode; toggleTheme: () => void };
