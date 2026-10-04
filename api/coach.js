@@ -1,5 +1,3 @@
-import { generateText } from 'ai';
-
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     res.setHeader('allow', 'POST');
@@ -26,9 +24,11 @@ export default async function handler(req, res) {
     : '';
 
   try {
-    const { text } = await generateText({
-      model: 'openai/gpt-5.6-sol',
-      system:
+    if (!process.env.OPENAI_API_KEY) {
+      return res.status(500).json({ error: 'Meta Coach is not configured.' });
+    }
+
+    const systemPrompt =
         String(track) === 'Project Builder'
           ? (
               'You are Meta Project Agent inside a coding project workspace. ' +
@@ -53,9 +53,36 @@ export default async function handler(req, res) {
               'For coding questions, preserve the user\'s existing approach when possible. ' +
               'The learner level is ' + String(level) + ', the selected track is ' + String(track) +
               ', and the preferred language is ' + String(language) + '.'
-            ),
-      prompt: trimmed + projectContext,
+            );
+
+    const aiResponse = await fetch('https://api.openai.com/v1/responses', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: 'gpt-5.6-sol',
+        instructions: systemPrompt,
+        input: trimmed + projectContext,
+      }),
     });
+
+    const data = await aiResponse.json();
+    if (!aiResponse.ok) {
+      console.error('OpenAI API error', aiResponse.status, data?.error?.message || data);
+      return res.status(502).json({ error: 'Meta Coach could not reach the AI service.' });
+    }
+
+    const text =
+      data.output_text ||
+      data.output?.flatMap((item) => item.content || [])
+        ?.find((item) => item.type === 'output_text')?.text ||
+      '';
+
+    if (!text) {
+      return res.status(502).json({ error: 'Meta Coach received an empty AI response.' });
+    }
 
     if (String(track) === 'Project Builder') {
       try {
