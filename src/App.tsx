@@ -977,7 +977,13 @@ function ProjectPage() {
       const response = await fetch('/api/coach', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ message: prompt, track: 'Project Builder', project }),
+        body: JSON.stringify({
+          message: prompt,
+          track: 'Project Builder',
+          project: { ...project, files: currentFiles },
+          history: project.messages || [],
+          activeFile,
+        }),
       });
       const payload = await response.json();
       if (!response.ok) throw new Error(payload?.error || 'Meta AI could not respond.');
