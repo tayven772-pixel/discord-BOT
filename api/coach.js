@@ -10,17 +10,31 @@ export default async function handler(req, res) {
     language = 'English',
     track = 'Coding',
     project = null,
+    history = [],
+    activeFile = '',
   } = req.body || {};
 
   const trimmed = String(message).trim();
   if (!trimmed) return res.status(400).json({ error: 'Message is required.' });
 
+  const safeHistory = Array.isArray(history)
+    ? history.slice(-12).map((item) => ({
+        role: item?.role === 'assistant' ? 'assistant' : 'user',
+        content: String(item?.content || '').slice(0, 2000),
+      }))
+    : [];
+
   const projectContext = project
-    ? '\nCurrent project: ' + JSON.stringify({
+    ? '\nCurrent project workspace: ' + JSON.stringify({
         name: project.name,
         type: project.type,
-        files: project.files,
-      }).slice(0, 12000)
+        activeFile: String(activeFile || ''),
+        files: project.files || {},
+      }).slice(0, 24000)
+    : '';
+
+  const conversationContext = safeHistory.length
+    ? '\nRecent conversation: ' + JSON.stringify(safeHistory).slice(0, 12000)
     : '';
 
   try {
@@ -35,7 +49,9 @@ export default async function handler(req, res) {
               'You can create and update starter project files. Respond ONLY with valid JSON and no markdown fences. ' +
               'Use this exact shape: {"reply":"short helpful message","project":{"name":"project name","type":"Website|Game|App|Roblox|MCBE|MCJE|MCJE Mod|Blank","files":{"path/file.ext":"full file content"}}}. ' +
               'When no project exists, infer a useful project name/type and create a small runnable starter. ' +
-              'When a project exists, preserve existing files unless the requested change requires edits, and return the complete current file map after edits. ' +
+              'When a project exists, inspect its files before answering. Preserve existing files unless the requested change requires edits, and return the complete current file map after edits. ' +
+              'Use the recent conversation to understand follow-up requests. If an active file is provided, treat it as the file the learner is currently viewing. ' +
+              'Actually implement requested coding changes in the returned files instead of only explaining what to do. ' +
               'Keep projects reasonably small and safe. Do not claim a file exists unless it is included in files.'
             )
           : String(track) === 'Discord Support'
@@ -64,7 +80,7 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         model: 'gpt-5.6-sol',
         instructions: systemPrompt,
-        input: trimmed + projectContext,
+        input: trimmed + conversationContext + projectContext,
       }),
     });
 
